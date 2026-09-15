@@ -1,0 +1,5 @@
+# Official Google Ads API client library.
+# 31.x targets Google Ads API v25 by default.
+google-ads>=31.0,<32
+# PyYAML is pulled in transitively, but pin it so config parsing is deterministic.
+PyYAML>=6.0

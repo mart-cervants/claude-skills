@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+
+# real credentials — only *.example files should ever be committed
+**/config/*.yaml
+!**/config/*.yaml.example
+**/config/*.yml
+!**/config/*.yml.example
+.env
+*.key
+*.pem
+
+.DS_Store

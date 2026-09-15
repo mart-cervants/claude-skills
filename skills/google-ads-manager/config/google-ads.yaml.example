@@ -1,0 +1,37 @@
+# ---------------------------------------------------------------------------
+# Google Ads API configuration TEMPLATE (service-account / domain-wide delegation)
+#
+# DO NOT put real credentials in this file or anywhere inside the skill folder.
+# Copy this file to a location OUTSIDE the skill (and outside git), e.g.:
+#
+#     mkdir -p ~/.config/google-ads
+#     cp google-ads.yaml.example ~/.config/google-ads/google-ads.yaml
+#
+# Then point the scripts at it:
+#
+#     export GOOGLE_ADS_CONFIGURATION_FILE_PATH="$HOME/.config/google-ads/google-ads.yaml"
+#
+# See SETUP.md for how to obtain each value.
+# ---------------------------------------------------------------------------
+
+# Developer token from your Google Ads Manager (MCC) account's API Center.
+# NOTE: a brand-new token has TEST-account access only until Google approves
+# Basic/Standard access. Production customer IDs will error until then.
+developer_token: "INSERT_DEVELOPER_TOKEN"
+
+# --- Service account (domain-wide delegation) ---
+# Absolute path to the service account's JSON key file.
+json_key_file_path: "/absolute/path/to/service-account-key.json"
+
+# A Google Workspace user that has access to the Google Ads account. The
+# service account impersonates this user. Domain-wide delegation MUST be
+# enabled for the service account in the Workspace Admin console.
+impersonated_email: "ads-user@your-workspace-domain.com"
+
+# The Google Ads customer ID the scripts operate against, digits only, no
+# dashes (e.g. 1234567890, not 123-456-7890). For a single account this is
+# both the login and target account.
+login_customer_id: "1234567890"
+
+# Use proto-plus message objects (recommended, matches the code in scripts/).
+use_proto_plus: True
