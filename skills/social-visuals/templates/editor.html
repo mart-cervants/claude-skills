@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Card editor</title>
+<!--
+  Local card review/editor. Served by scripts/serve_editor.mjs from <kit>/.render/.
+  The preview is the exact post-card.html that the renderer turns into PNG, so what you see
+  here is what gets published.
+  - Click an element in the preview to select it; drag to move; drag the corner handle to resize.
+  - Guides snap to the card center, the margins and other elements (hold Alt to move freely).
+  - Arrow keys nudge 1px (Shift = 10px). Ctrl/Cmd+Z undo, Shift+Ctrl/Cmd+Z redo. Delete removes an added element.
+  - Positions are stored per card as "layout" overrides in the cards.json (px at 1080 base).
+-->
+<style>
+:root{--bg:#10131c;--panel:#171c29;--line:#2a3347;--text:#e8ecf4;--muted:#9aa6ba;--accent:#2dd4bf;--bad:#f87171;--ok:#4ade80;--warn:#fbbf24;--sel:#38bdf8}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+header{flex:none;display:flex;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+header h1{font-size:16px;margin:0}
+.spacer{flex:1}
+select,input,textarea,button{font:inherit;color:var(--text);background:#0e121b;border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+input[type=checkbox]{padding:0}
+textarea{width:100%;resize:vertical}
+button{cursor:pointer;background:#1f2740}
+button:hover:not(:disabled){border-color:var(--accent)}
+button.primary{background:var(--accent);color:#06251f;border-color:var(--accent);font-weight:600}
+button.danger{color:var(--bad)}
+button:disabled{opacity:.45;cursor:default}
+button.sm{padding:2px 7px;font-size:12px}
+main{flex:1;min-height:0;display:grid;grid-template-columns:200px minmax(340px,1fr) 380px;align-items:stretch}
+aside{min-height:0;border-right:1px solid var(--line);padding:10px;background:var(--panel);overflow:auto}
+.list-item{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 6px;padding:7px;border:1px solid transparent;border-radius:6px;cursor:pointer;margin-bottom:4px}
+.list-item:hover{border-color:var(--line)}
+.list-item.active{border-color:var(--accent);background:#0e121b}
+.badge{font-size:11px;padding:1px 6px;border-radius:10px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.approved{color:var(--ok);border-color:var(--ok)}
+.badge.custom{color:var(--sel);border-color:var(--sel)}
+.preview{min-height:0;min-width:0;padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px;overflow:hidden}
+#stageBox{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;overflow:auto;position:relative}
+.drop{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(45,212,191,.12);border:2px dashed var(--accent);border-radius:8px;color:var(--accent);font-weight:600;pointer-events:none;z-index:5;padding:20px}
+#stageBox.dropping .drop{display:flex}
+.msg{flex:none;height:18px;line-height:18px;width:100%;max-width:700px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;color:var(--warn)}
+.msg.bad{color:var(--bad)}
+.toolbar{flex:none;display:flex;gap:6px;flex-wrap:wrap;align-items:center;width:100%;max-width:700px}
+.frame-wrap{position:relative;border:1px solid var(--line);background:#000;flex:none}
+.frame-wrap iframe{position:absolute;left:0;top:0;border:0;transform-origin:0 0;pointer-events:none}
+#ov{position:absolute;inset:0;cursor:default;touch-action:none}
+#ov.grab{cursor:grab}
+.box{position:absolute;pointer-events:none;border:1px solid transparent}
+.box.hov{border-color:rgba(56,189,248,.55)}
+.box.sel{border:2px solid var(--sel)}
+.handle{position:absolute;width:14px;height:14px;background:var(--sel);border:2px solid #fff;border-radius:3px;cursor:nwse-resize;transform:translate(-50%,-50%)}
+.gv,.gh{position:absolute;background:#ff00c8;pointer-events:none}
+.gv{width:1px;top:0;bottom:0}.gh{height:1px;left:0;right:0}
+.status{flex:none;height:48px;display:flex;align-items:center;font-size:13px;line-height:1.3;padding:0 10px;border-radius:6px;border:1px solid var(--line);width:100%;max-width:700px;overflow:hidden}
+.status.ok{color:var(--ok);border-color:var(--ok)}
+.status.bad{color:var(--bad);border-color:var(--bad)}
+.status.warn{color:var(--warn);border-color:var(--warn)}
+.form{min-height:0;padding:12px;border-left:1px solid var(--line);background:var(--panel);overflow:auto}
+label{display:block;margin:9px 0 3px;color:var(--muted);font-size:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.hint{color:var(--muted);font-size:12px}
+h3{font-size:13px;margin:16px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.layer{display:flex;align-items:center;gap:6px;padding:3px 6px;border:1px solid transparent;border-radius:6px;cursor:pointer}
+.layer:hover{border-color:var(--line)}
+.layer.active{border-color:var(--sel);background:#0e121b}
+.layer .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.layer.off .nm{opacity:.45;text-decoration:line-through}
+.num{width:70px}
+.props{border:1px solid var(--line);border-radius:8px;padding:8px;background:#0e121b;margin-top:8px}
+.props .row{margin-top:6px}
+.result img{max-width:100%;border:1px solid var(--line);margin-top:8px}
+pre{white-space:pre-wrap;background:#0e121b;border:1px solid var(--line);padding:8px;border-radius:6px;font-size:12px;max-height:150px;overflow:auto}
+a{color:var(--accent)}
+.dirty{color:var(--warn)}
+@media(max-width:1100px){html,body{height:auto}body{display:block;overflow:auto}main{display:flex;flex-direction:column}aside{order:0;border:0;border-bottom:1px solid var(--line)}#list{display:flex;flex-wrap:wrap;gap:6px}.list-item{margin:0}.preview{order:1;overflow:visible}#stageBox{flex:none;height:min(78vh,720px)}.form{order:2;border:0;border-top:1px solid var(--line)}}
+</style></head><body>
+<header>
+  <h1>Card editor</h1>
+  <select id="file" title="Cards file"></select>
+  <span id="dirty" class="hint"></span>
+  <span class="spacer"></span>
+  <label style="margin:0"><input type="checkbox" id="snapOn" checked> snap</label>
+  <label style="margin:0"><input type="checkbox" id="debug"> show margins</label>
+  <button id="save" class="primary">Save</button>
+</header>
+<main>
+  <aside>
+    <div id="list"></div>
+    <div class="row"><button id="add">+ New card</button><button id="dup">Duplicate</button></div>
+    <p class="hint">Click a card to preview and edit it. Status <b>approved</b> means "ready to render and upload".</p>
+  </aside>
+  <section class="preview">
+    <div id="fit" class="status">Loading…</div>
+    <div class="toolbar">
+      <button id="undo" class="sm">↶ Undo</button><button id="redo" class="sm">↷ Redo</button>
+      <button id="addText" class="sm">+ Text</button>
+      <button id="addImgBtn" class="sm" title="Upload an image from your computer (or drop one on the card)">+ Image…</button>
+      <select id="addImg" class="sm" title="Add an image already in the kit"><option value="">kit images…</option></select>
+      <button id="resetAll" class="sm">Reset layout</button>
+      <select id="zoom" class="sm" title="Preview size"><option value="fit">Fit</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option></select>
+      <span class="hint">Drag to move · corner to resize · click again to pick the element underneath · Alt = no snap</span>
+    </div>
+    <div id="msg" class="msg"></div>
+    <div id="stageBox"><div class="frame-wrap" id="wrap"><iframe id="frame" title="Card preview"></iframe><div id="ov"></div></div><div class="drop">Drop an image to add it to the card<br><small>hold Shift to use it as the background</small></div></div>
+    <div class="hint">Preview link (same card): <a id="link" target="_blank" rel="noopener">open in a new tab</a></div>
+  </section>
+  <section class="form">
+    <label>Id (file name)</label><input id="f-id" style="width:100%" disabled>
+    <label>Kicker</label><input id="f-kicker" style="width:100%">
+    <label>Headline — wrap the highlighted word in [brackets]</label><textarea id="f-title" rows="3"></textarea>
+    <label>Support line</label><textarea id="f-body" rows="2"></textarea>
+    <label>Footer / CTA</label><input id="f-cta" style="width:100%">
+    <label>Alt text (accessibility)</label><textarea id="f-alt" rows="2"></textarea>
+    <div class="row">
+      <div><label style="margin-top:0">Size</label>
+        <select id="f-size"><option value="1080x1080">1080×1080 square</option><option value="1080x1350">1080×1350 portrait</option><option value="1200x630">1200×630 link</option></select></div>
+      <div><label style="margin-top:0">Status</label>
+        <select id="f-status"><option value="draft">draft</option><option value="approved">approved</option></select></div>
+    </div>
+    <h3>Background</h3>
+    <div class="row" style="margin-top:0"><button id="bgUp" class="sm">Upload background…</button><button id="bgRm" class="sm" disabled>Remove</button><span id="bgName" class="hint">none (text-free art only)</span></div>
+    <div class="row" id="dimRow" style="margin-top:6px;display:none"><label style="margin:0">Dim background <input type="range" id="bgDim" min="0" max="100" step="5" style="vertical-align:middle;width:140px"> <span id="dimVal" class="hint"></span></label></div>
+    <h3>Elements</h3>
+    <div id="layers"></div>
+    <div id="props" class="props" style="display:none"></div>
+    <div class="row"><button id="render">Save + Render PNG</button><button id="del" class="danger">Delete card</button></div>
+    <div class="result" id="result"></div>
+  </section>
+</main>
+<input type="file" id="imgIn" accept="image/*" multiple hidden><input type="file" id="bgIn" accept="image/*" hidden>
+<script>
+const $ = id => document.getElementById(id);
+const LABEL = { kicker: 'Kicker', title: 'Headline', bar: 'Accent bar', body: 'Support line', logo: 'Logo', cta: 'Footer text', net: 'Network graphic' };
+const BASE_EL = Object.keys(LABEL);
+let file = null, data = { defaults: { w: 1080, h: 1080 }, cards: [] }, cur = 0, dirty = false, timer = null, sel = null, K = 1, rects = {}, drag = null, guides = { v: [], h: [] }, hov = null, raf = 0, assets = [];
+const hist = new Map();
+const card = () => data.cards[cur];
+const SIZE = c => [c.w || (data.defaults || {}).w || 1080, c.h || (data.defaults || {}).h || 1080];
+const SC = () => Math.min(...SIZE(card())) / 1080;
+const r1 = n => Math.round(n * 10) / 10, r2 = n => Math.round(n * 100) / 100;
+const isExtra = n => /^x\d+$/.test(n || '');
+const layout = () => (card().layout = card().layout || {});
+function el(name, create) {
+  const L = layout();
+  if (isExtra(name)) return (L.extras || [])[+name.slice(1)];
+  if (create) L[name] = Object.assign({ x: 0, y: 0, s: 1, hide: false }, L[name]);
+  return L[name] || { x: 0, y: 0, s: 1, hide: false };
+}
+function prune(L) { // clean copy without default entries
+  const out = {};
+  for (const k of BASE_EL) { const o = (L || {})[k]; if (o && (o.x || o.y || (o.s && o.s !== 1) || o.hide)) { out[k] = { x: o.x || 0, y: o.y || 0, s: o.s || 1 }; if (o.hide) out[k].hide = true; } }
+  if (L && L.extras && L.extras.length) out.extras = L.extras;
+  return out;
+}
+const hasLayout = c => Object.keys(prune(c.layout)).length > 0;
+
+async function api(path, opts) { const r = await fetch(path, opts); const t = await r.text(); try { return JSON.parse(t); } catch { return { error: t }; } }
+function setDirty(v) { dirty = v; $('dirty').textContent = v ? '● unsaved changes' : ''; $('dirty').className = v ? 'hint dirty' : 'hint'; }
+
+// ---------- history ----------
+const H = () => { const id = card().id; if (!hist.has(id)) hist.set(id, { u: [], r: [] }); return hist.get(id); };
+function snap() { const h = H(); h.u.push(JSON.stringify(prune(layout()))); if (h.u.length > 100) h.u.shift(); h.r = []; }
+function restore(json) { card().layout = JSON.parse(json); setDirty(true); if (sel && !el(sel)) sel = null; applyLive(); renderLayers(); renderProps(); renderList(); }
+function undo() { const h = H(); if (!h.u.length) return; h.r.push(JSON.stringify(prune(layout()))); restore(h.u.pop()); }
+function redo() { const h = H(); if (!h.r.length) return; h.u.push(JSON.stringify(prune(layout()))); restore(h.r.pop()); }
+
+// ---------- files / cards ----------
+async function loadFiles() {
+  const f = await api('/api/files'); const sel2 = $('file'); sel2.innerHTML = '';
+  (f.files || []).forEach(x => sel2.add(new Option(x, x)));
+  const a = await api('/api/assets'); assets = a.assets || [];
+  assets.forEach(x => $('addImg').add(new Option(x, x)));
+  const want = new URLSearchParams(location.search).get('cards') || f.default;
+  if (want) { if (![...sel2.options].some(o => o.value === want)) sel2.add(new Option(want, want)); sel2.value = want; await loadCards(want); }
+  else $('fit').textContent = 'No *.cards.json found in calendar/. Create one first.';
+}
+async function loadCards(f) {
+  file = f; const d = await api('/api/cards?file=' + encodeURIComponent(f));
+  if (d.error) { $('fit').textContent = 'Could not load ' + f + ': ' + d.error; $('fit').className = 'status bad'; return; }
+  data = d; data.cards = data.cards || []; cur = 0; sel = null; setDirty(false); renderList(); select(0);
+}
+function renderList() {
+  const l = $('list'); l.innerHTML = '';
+  data.cards.forEach((c, i) => {
+    const d = document.createElement('div'); d.className = 'list-item' + (i === cur ? ' active' : '');
+    const nm = document.createElement('span'); nm.textContent = c.id; d.appendChild(nm);
+    const b = document.createElement('span'); b.style.display = 'flex'; b.style.gap = '4px'; b.style.flexWrap = 'wrap';
+    if (hasLayout(c)) { const x = document.createElement('span'); x.className = 'badge custom'; x.textContent = 'custom'; b.appendChild(x); }
+    const st = document.createElement('span'); st.className = 'badge ' + (c.status === 'approved' ? 'approved' : ''); st.textContent = c.status || 'draft'; b.appendChild(st);
+    d.appendChild(b); d.onclick = () => { commit(); select(i); }; l.appendChild(d);
+  });
+}
+function select(i) {
+  if (!data.cards.length) { $('fit').textContent = 'No cards yet. Click "+ New card".'; return; }
+  cur = Math.max(0, Math.min(i, data.cards.length - 1)); const c = card(); sel = null;
+  $('f-id').value = c.id; $('f-kicker').value = c.kicker || ''; $('f-title').value = c.title || ''; $('f-body').value = c.body || '';
+  $('f-cta').value = c.cta || ''; $('f-alt').value = c.alt || ''; $('f-status').value = c.status || 'draft';
+  const [w, h] = SIZE(c); $('f-size').value = w + 'x' + h; $('result').innerHTML = ''; updateBg();
+  renderList(); renderLayers(); renderProps(); preview();
+}
+function commit() { // form -> data
+  const c = card(); if (!c) return;
+  const [w, h] = $('f-size').value.split('x').map(Number);
+  Object.assign(c, { kicker: $('f-kicker').value, title: $('f-title').value, body: $('f-body').value, cta: $('f-cta').value, alt: $('f-alt').value, status: $('f-status').value });
+  if (w !== (data.defaults || {}).w || h !== (data.defaults || {}).h) { c.w = w; c.h = h; } else { delete c.w; delete c.h; }
+}
+
+// ---------- preview ----------
+function previewUrl() {
+  const c = card(); const [w, h] = SIZE(c); const p = new URLSearchParams({ w, h });
+  for (const k of ['kicker', 'title', 'body', 'cta', 'bg']) if (c[k]) p.set(k, c[k]);
+  if (c.bg && c.dim != null) p.set('dim', String(c.dim));
+  if (c.net === 0) p.set('net', '0'); if ($('debug').checked) p.set('debug', '1');
+  const L = prune(c.layout); if (Object.keys(L).length) p.set('lay', JSON.stringify(L));
+  return '/.render/post-card.html?' + p;
+}
+function layoutPreview() {
+  const c = card(); if (!c) return; const [w, h] = SIZE(c), box = $('stageBox'), z = $('zoom').value;
+  const availW = Math.max(120, box.clientWidth - 8), availH = Math.max(120, box.clientHeight - 8);
+  K = z === 'fit' ? Math.min(1, availW / w, availH / h) : Number(z);
+  const fr = $('frame'), wrap = $('wrap'); fr.style.width = w + 'px'; fr.style.height = h + 'px'; fr.style.transform = 'scale(' + K + ')';
+  wrap.style.width = Math.round(w * K) + 'px'; wrap.style.height = Math.round(h * K) + 'px'; drawBoxes();
+}
+function preview() {
+  const c = card(); if (!c) return; const [w, h] = SIZE(c); const url = previewUrl();
+  const fr = $('frame'); layoutPreview();
+  $('link').href = location.origin + url; fr.src = url; $('fit').textContent = 'Rendering preview…'; $('fit').className = 'status'; rects = {}; drawBoxes();
+  let n = 0; const poll = setInterval(() => {
+    n++; try {
+      const d = fr.contentDocument && fr.contentDocument.documentElement;
+      if (d && d.dataset.ready === '1') { clearInterval(poll); showFit(d.dataset); refreshRects(); drawBoxes(); }
+    } catch (e) {} if (n > 80) { clearInterval(poll); $('fit').textContent = 'Preview did not finish loading (check the console).'; $('fit').className = 'status bad'; }
+  }, 100);
+}
+function showFit(ds) {
+  const e = $('fit'), c = card(), custom = hasLayout(c); setTimeout(() => { e.title = e.textContent; }, 0);
+  if (ds.overflow === '1') { e.textContent = '⚠ ' + ds.overflowReason + '. Fix it — this card will fail to render.'; e.className = 'status bad'; }
+  else if (!custom && Number(ds.titleSize) < 80 * (Math.min(...SIZE(c)) / 1080)) { e.textContent = 'Fits, headline shrunk to ' + ds.titleSize + 'px (' + ds.titleLines + ' lines). Consider shorter copy.'; e.className = 'status warn'; }
+  else { e.textContent = '✓ Fits — headline ' + ds.titleSize + 'px, ' + ds.titleLines + ' line(s)' + (custom ? ' · custom layout' : ''); e.className = 'status ok'; }
+}
+function refreshRects() { try { rects = $('frame').contentWindow.__cardRects(); } catch (e) { rects = {}; } }
+async function applyLive() {
+  const w = $('frame').contentWindow; if (!w || !w.__cardApply) return;
+  try { const ds = await w.__cardApply(JSON.parse(JSON.stringify(prune(layout())))); showFit(ds); } catch (e) { return; }
+  refreshRects(); drawBoxes();
+}
+const scheduleLive = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; applyLive(); }); };
+
+// ---------- overlay ----------
+function drawBoxes() {
+  const ov = $('ov'); ov.innerHTML = '';
+  const box = (name, cls) => { const r = rects[name]; if (!r) return null; const d = document.createElement('div'); d.className = 'box ' + cls;
+    Object.assign(d.style, { left: r.l * K + 'px', top: r.t * K + 'px', width: (r.r - r.l) * K + 'px', height: (r.b - r.t) * K + 'px' }); ov.appendChild(d); return d; };
+  if (hov && hov !== sel) box(hov, 'hov');
+  if (sel && rects[sel]) {
+    box(sel, 'sel'); const r = rects[sel]; const h = document.createElement('div'); h.className = 'handle'; h.dataset.handle = '1';
+    h.style.left = r.r * K + 'px'; h.style.top = r.b * K + 'px'; ov.appendChild(h);
+  }
+  guides.v.forEach(x => { const d = document.createElement('div'); d.className = 'gv'; d.style.left = x * K + 'px'; ov.appendChild(d); });
+  guides.h.forEach(y => { const d = document.createElement('div'); d.className = 'gh'; d.style.top = y * K + 'px'; ov.appendChild(d); });
+}
+const pt = e => { const r = $('ov').getBoundingClientRect(); return { x: (e.clientX - r.left) / K, y: (e.clientY - r.top) / K }; };
+function hitAll(p) { // every selectable element under the point, topmost first
+  const out = [];
+  try {
+    for (const n of $('frame').contentDocument.elementsFromPoint(p.x, p.y)) {
+      const t = n.closest && n.closest('[data-el]'); if (t && t.dataset.el !== 'net' && !out.includes(t.dataset.el)) out.push(t.dataset.el);
+    }
+  } catch (e) {}
+  return out;
+}
+const hit = p => hitAll(p)[0] || null;
+function setSel(n) { sel = n; drawBoxes(); renderLayers(); renderProps(); }
+function snapAdjust(r0, dx, dy, name) {
+  const [W, Hh] = SIZE(card()), M = Math.round(88 * SC()), T = 8;
+  const mvX = [r0.l + dx, (r0.l + r0.r) / 2 + dx, r0.r + dx], mvY = [r0.t + dy, (r0.t + r0.b) / 2 + dy, r0.b + dy];
+  const tx = [W / 2, M, W - M], ty = [Hh / 2, M, Hh - M];
+  for (const [n, r] of Object.entries(rects)) { if (n === name || n === 'net') continue; tx.push(r.l, (r.l + r.r) / 2, r.r); ty.push(r.t, (r.t + r.b) / 2, r.b); }
+  const best = (mv, tg) => { let b = null; for (const m of mv) for (const t of tg) { const d = t - m; if (Math.abs(d) <= T && (!b || Math.abs(d) < Math.abs(b.d))) b = { d, t }; } return b; };
+  const bx = best(mvX, tx), by = best(mvY, ty);
+  return { dx: bx ? bx.d : 0, dy: by ? by.d : 0, v: bx ? [bx.t] : [], h: by ? [by.t] : [] };
+}
+$('ov').addEventListener('pointerdown', e => {
+  if (!card()) return; const p = pt(e);
+  if (e.target.dataset && e.target.dataset.handle && sel) {
+    snap(); const r = rects[sel]; drag = { mode: 'resize', name: sel, r0: r, s0: el(sel).s || 1, d0: Math.hypot(r.r - r.l, r.b - r.t) || 1, moved: false };
+  } else {
+    // a selected element stays grabbable even if another one covers it; clicking again cycles through the stack
+    const names = hitAll(p), n = sel && names.includes(sel) ? sel : names[0], wasSel = !!n && n === sel;
+    setSel(n || null); if (!n) return;
+    snap(); const st = el(n, true); drag = { mode: 'move', name: n, p0: p, x0: st.x || 0, y0: st.y || 0, r0: rects[n], moved: false, names, wasSel };
+  }
+  try { $('ov').setPointerCapture(e.pointerId); } catch (_) {}
+});
+$('ov').addEventListener('pointermove', e => {
+  const p = pt(e);
+  if (!drag) { const n = hit(p); if (n !== hov) { hov = n; drawBoxes(); } return; }
+  const sc = SC();
+  if (drag.mode === 'move') {
+    let dx = p.x - drag.p0.x, dy = p.y - drag.p0.y;
+    if (Math.hypot(dx, dy) > 1.5) drag.moved = true;
+    guides = { v: [], h: [] };
+    if ($('snapOn').checked && !e.altKey && drag.r0) { const a = snapAdjust(drag.r0, dx, dy, drag.name); dx += a.dx; dy += a.dy; guides = { v: a.v, h: a.h }; }
+    const st = el(drag.name, true); st.x = r1(drag.x0 + dx / sc); st.y = r1(drag.y0 + dy / sc);
+  } else {
+    const r = drag.r0, d = Math.hypot(p.x - r.l, p.y - r.t), st = el(drag.name, true);
+    st.s = Math.max(0.3, Math.min(5, r2(drag.s0 * d / drag.d0))); drag.moved = true;
+  }
+  setDirty(true); scheduleLive();
+});
+function endDrag() {
+  if (!drag) return; const d = drag; drag = null; guides = { v: [], h: [] };
+  if (!d.moved) { const h = H(); h.u.pop(); if (d.mode === 'move' && d.wasSel && d.names.length > 1) setSel(d.names[(d.names.indexOf(d.name) + 1) % d.names.length]); }
+  else { renderList(); renderLayers(); renderProps(); }
+  drawBoxes();
+}
+$('ov').addEventListener('pointerup', endDrag); $('ov').addEventListener('pointercancel', endDrag);
+$('ov').addEventListener('pointerleave', () => { if (!drag && hov) { hov = null; drawBoxes(); } });
+
+// ---------- layers and properties ----------
+function nameOf(n) { if (isExtra(n)) { const e = el(n); return e && e.type === 'image' ? '🖼 ' + (e.src || 'image') : '“' + ((e && e.text) || 'text').slice(0, 22) + '”'; } return LABEL[n]; }
+function layerNames() { return [...BASE_EL, ...((layout().extras || []).map((_, i) => 'x' + i))]; }
+function renderLayers() {
+  const box = $('layers'); box.innerHTML = ''; if (!card()) return;
+  layerNames().forEach(n => {
+    const o = el(n); if (!o) return; const d = document.createElement('div'); d.className = 'layer' + (sel === n ? ' active' : '') + (o.hide ? ' off' : '');
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = nameOf(n); d.appendChild(nm);
+    const eye = document.createElement('button'); eye.className = 'sm'; eye.textContent = o.hide ? 'show' : 'hide'; eye.title = 'Show / hide this element';
+    eye.onclick = ev => { ev.stopPropagation(); snap(); const st = el(n, true); st.hide = !st.hide; setDirty(true); applyLive(); renderLayers(); renderList(); };
+    d.appendChild(eye); d.onclick = () => setSel(n); box.appendChild(d);
+  });
+}
+function renderProps() {
+  const box = $('props'); if (!sel || !el(sel)) { box.style.display = 'none'; return; }
+  const o = el(sel), ex = isExtra(sel); box.style.display = 'block'; box.innerHTML = '';
+  const title = document.createElement('div'); title.innerHTML = '<b></b>'; title.firstChild.textContent = nameOf(sel); box.appendChild(title);
+  const row = (children) => { const r = document.createElement('div'); r.className = 'row'; children.forEach(c => r.appendChild(c)); box.appendChild(r); return r; };
+  const field = (lab, val, step, onSet) => { const w = document.createElement('label'); w.style.margin = '0'; w.textContent = lab + ' '; const i = document.createElement('input'); i.type = 'number'; i.className = 'num'; i.step = step; i.value = val;
+    let snapped = false; i.addEventListener('focus', () => { snapped = false; });
+    i.addEventListener('input', () => { if (!snapped) { snap(); snapped = true; } onSet(Number(i.value)); setDirty(true); scheduleLive(); });
+    w.appendChild(i); return w; };
+  row([field('X', r1(o.x || 0), 1, v => { el(sel, true).x = v; }), field('Y', r1(o.y || 0), 1, v => { el(sel, true).y = v; }), field('Size %', Math.round((o.s || 1) * 100), 5, v => { el(sel, true).s = Math.max(0.2, Math.min(6, v / 100)); })]);
+  if (ex && o.type === 'text') {
+    const t = document.createElement('textarea'); t.rows = 2; t.value = o.text || ''; t.addEventListener('focus', () => snap()); t.addEventListener('input', () => { o.text = t.value; setDirty(true); renderLayers(); scheduleLive(); }); box.appendChild(t);
+    const col = document.createElement('select'); ['text', 'accent', 'muted'].forEach(c => col.add(new Option(c, c))); col.value = o.color || 'text';
+    col.onchange = () => { snap(); o.color = col.value; setDirty(true); applyLive(); };
+    const wt = document.createElement('select'); [[700, 'bold'], [400, 'regular']].forEach(([v, l]) => wt.add(new Option(l, v))); wt.value = o.weight || 700;
+    wt.onchange = () => { snap(); o.weight = Number(wt.value); setDirty(true); applyLive(); };
+    row([field('Base px', o.size || 44, 2, v => { o.size = Math.max(8, v); }), col, wt]);
+  }
+  const alignH = document.createElement('button'); alignH.className = 'sm'; alignH.textContent = 'Center ↔'; alignH.onclick = () => align('h');
+  const alignV = document.createElement('button'); alignV.className = 'sm'; alignV.textContent = 'Center ↕'; alignV.onclick = () => align('v');
+  const reset = document.createElement('button'); reset.className = 'sm'; reset.textContent = 'Reset element';
+  reset.onclick = () => { snap(); if (ex) { o.x = 0; o.y = 0; o.s = 1; } else { delete layout()[sel]; } setDirty(true); applyLive(); renderProps(); renderLayers(); renderList(); };
+  const btns = [alignH, alignV, reset];
+  if (ex) { const del = document.createElement('button'); del.className = 'sm danger'; del.textContent = 'Delete'; del.onclick = deleteSel; btns.push(del); }
+  row(btns);
+}
+function align(axis) {
+  const r = rects[sel]; if (!r) return; snap(); const [W, Hh] = SIZE(card()), sc = SC(), st = el(sel, true);
+  if (axis === 'h') st.x = r1((st.x || 0) + (W / 2 - (r.l + r.r) / 2) / sc); else st.y = r1((st.y || 0) + (Hh / 2 - (r.t + r.b) / 2) / sc);
+  setDirty(true); applyLive(); renderProps();
+}
+function deleteSel() { if (!isExtra(sel)) return; snap(); layout().extras.splice(+sel.slice(1), 1); sel = null; setDirty(true); applyLive(); renderLayers(); renderProps(); renderList(); }
+function addExtra(e) { snap(); const L = layout(); L.extras = L.extras || []; if (L.extras.length >= 12) return; L.extras.push(e); sel = 'x' + (L.extras.length - 1); setDirty(true); applyLive(); renderLayers(); renderProps(); renderList(); }
+$('addText').onclick = () => addExtra({ type: 'text', text: 'New text', x: 88, y: 120, size: 44, color: 'text', weight: 700, s: 1 });
+$('addImg').onchange = e => { if (e.target.value) addExtra({ type: 'image', src: e.target.value, x: r1(Math.max(0, SIZE(card())[0] / SC() - 88 - 160)), y: 88, w: 160, s: 1 }); e.target.value = ''; };
+$('resetAll').onclick = () => { snap(); card().layout = {}; sel = null; setDirty(true); preview(); renderLayers(); renderProps(); renderList(); };
+$('undo').onclick = undo; $('redo').onclick = redo;
+let lastNudge = 0;
+document.addEventListener('keydown', e => {
+  if (/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) return;
+  const mod = e.metaKey || e.ctrlKey;
+  if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+  if (!sel) return;
+  if (e.key === 'Escape') { setSel(null); return; }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && isExtra(sel)) { e.preventDefault(); deleteSel(); return; }
+  const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key]; if (!d) return;
+  e.preventDefault(); const step = e.shiftKey ? 10 : 1, now = Date.now(); if (now - lastNudge > 700) snap(); lastNudge = now;
+  const st = el(sel, true); st.x = r1((st.x || 0) + d[0] * step); st.y = r1((st.y || 0) + d[1] * step); setDirty(true); applyLive(); renderProps();
+});
+
+// ---------- image upload (button, drag & drop, background) ----------
+// Images are re-encoded in the browser (max 2400 px; PNG keeps transparency, everything else becomes JPEG).
+// Re-encoding also strips EXIF metadata such as GPS location.
+const MAXPX = 2400;
+let msgTimer = null;
+function say(text, bad) { const m = $('msg'); m.textContent = text || ''; m.title = text || ''; m.className = 'msg' + (bad ? ' bad' : ''); clearTimeout(msgTimer); if (text) msgTimer = setTimeout(() => { if (m.textContent === text) m.textContent = ''; }, 9000); }
+async function prepareImage(file) {
+  if (/heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name)) throw new Error('HEIC/HEIF photos are not supported by browsers. Export the photo as JPG or PNG first.');
+  if (!file.type.startsWith('image/') && !/\.(png|jpe?g|webp|gif|avif)$/i.test(file.name)) throw new Error('"' + file.name + '" is not an image. Use PNG, JPG or WebP.');
+  let bmp; try { bmp = await createImageBitmap(file); } catch { throw new Error('"' + file.name + '" could not be read as an image (unsupported or corrupted). Use PNG, JPG or WebP.'); }
+  const k = Math.min(1, MAXPX / Math.max(bmp.width, bmp.height)), w = Math.max(1, Math.round(bmp.width * k)), h = Math.max(1, Math.round(bmp.height * k));
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const ctx = cv.getContext('2d');
+  const keepAlpha = /png|webp|gif|avif/i.test(file.type);
+  if (!keepAlpha) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
+  ctx.imageSmoothingQuality = 'high'; ctx.drawImage(bmp, 0, 0, w, h);
+  const blob = await new Promise(r => cv.toBlob(r, keepAlpha ? 'image/png' : 'image/jpeg', 0.9));
+  if (!blob) throw new Error('Could not convert "' + file.name + '".');
+  return { blob, w, h, name: file.name };
+}
+async function uploadFile(file) {
+  const img = await prepareImage(file);
+  const r = await fetch('/api/upload?name=' + encodeURIComponent(img.name), { method: 'POST', headers: { 'content-type': 'application/octet-stream' }, body: img.blob });
+  const j = await r.json().catch(() => ({ error: 'upload failed' })); if (j.error) throw new Error(j.error);
+  if (![...$('addImg').options].some(o => o.value === j.path)) $('addImg').add(new Option(j.path, j.path));
+  return { path: j.path, w: img.w, h: img.h, reused: !!j.reused };
+}
+function updateBg() { const c = card(); $('bgName').textContent = c && c.bg ? c.bg : 'none (text-free art only)'; $('bgRm').disabled = !(c && c.bg);
+  $('dimRow').style.display = c && c.bg ? 'flex' : 'none'; const d = c && c.dim != null ? c.dim : 0.85; $('bgDim').value = Math.round(d * 100); $('dimVal').textContent = Math.round(d * 100) + '%'; }
+$('bgDim').addEventListener('input', () => { const c = card(); c.dim = Number($('bgDim').value) / 100; $('dimVal').textContent = $('bgDim').value + '%'; setDirty(true); clearTimeout(timer); timer = setTimeout(preview, 200); });
+function setBg(path) { commit(); if (path) card().bg = path; else delete card().bg; setDirty(true); updateBg(); preview(); }
+async function addImageFiles(files, opts = {}) {
+  const list = [...files].filter(Boolean); if (!list.length) return;
+  let n = 0;
+  for (const f of list.slice(0, 5)) {
+    say('Uploading ' + f.name + '…');
+    try {
+      const up = await uploadFile(f);
+      if (opts.asBg) { setBg(up.path); say('Background set: ' + up.path); break; }
+      // default size fits the free band above the headline (<= 360 wide, <= 220 tall)
+      const sc = SC(), wb = Math.max(40, Math.min(up.w, 360, Math.round(220 * up.w / up.h))), Wb = SIZE(card())[0] / sc, st = n++ * 36;
+      // dropped: centered on the drop point; button: top-right corner (usually free of text); several files are staggered
+      const x = opts.at ? Math.max(0, opts.at.x / sc - wb / 2 + st) : Math.max(0, Wb - 88 - wb - st), y = (opts.at ? Math.max(0, opts.at.y / sc - 60) : 88) + st;
+      addExtra({ type: 'image', src: up.path, x: r1(x), y: r1(y), w: wb, s: 1 }); say((up.reused ? 'Reused ' : 'Added ') + up.path + ' — drag it into place.');
+    } catch (e) { say(e.message, true); }
+  }
+}
+$('addImgBtn').onclick = () => $('imgIn').click();
+$('imgIn').onchange = async e => { await addImageFiles(e.target.files); e.target.value = ''; };
+$('bgUp').onclick = () => $('bgIn').click();
+$('bgIn').onchange = async e => { await addImageFiles([e.target.files[0]], { asBg: true }); e.target.value = ''; };
+$('bgRm').onclick = () => setBg(null);
+const hasFiles = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files');
+const box = $('stageBox');
+['dragenter', 'dragover'].forEach(t => box.addEventListener(t, e => { if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; box.classList.add('dropping'); }));
+box.addEventListener('dragleave', e => { if (e.target === box || !box.contains(e.relatedTarget)) box.classList.remove('dropping'); });
+box.addEventListener('drop', e => {
+  if (!hasFiles(e)) return; e.preventDefault(); box.classList.remove('dropping');
+  const r = $('ov').getBoundingClientRect(), at = { x: (e.clientX - r.left) / K, y: (e.clientY - r.top) / K };
+  addImageFiles(e.dataTransfer.files, { asBg: e.shiftKey, at });
+});
+// a file dropped outside the card must not make the browser navigate away from the editor
+window.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+window.addEventListener('drop', e => { if (hasFiles(e)) e.preventDefault(); });
+
+// ---------- text fields, save, render ----------
+function changed() { commit(); setDirty(true); renderList(); clearTimeout(timer); timer = setTimeout(preview, 250); }
+['f-kicker', 'f-title', 'f-body', 'f-cta', 'f-alt', 'f-size', 'f-status'].forEach(id => $(id).addEventListener('input', changed));
+$('debug').addEventListener('change', preview);
+$('file').addEventListener('change', async e => { if (dirty && !window.confirm('Discard unsaved changes?')) { e.target.value = file; return; } await loadCards(e.target.value); });
+async function save() {
+  commit(); data.cards.forEach(c => { if (c.layout) { c.layout = prune(c.layout); if (!Object.keys(c.layout).length) delete c.layout; } });
+  const r = await api('/api/cards?file=' + encodeURIComponent(file), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) });
+  if (r.error) { $('result').innerHTML = '<pre></pre>'; $('result').firstChild.textContent = 'Save failed: ' + r.error; return false; }
+  setDirty(false); renderList(); return true;
+}
+$('save').onclick = async () => { if (await save()) { $('save').textContent = 'Saved ✓'; setTimeout(() => $('save').textContent = 'Save', 1200); } };
+$('render').onclick = async () => {
+  if (!(await save())) return; const c = card(); $('render').disabled = true; $('result').textContent = 'Rendering…';
+  const r = await api('/api/render?file=' + encodeURIComponent(file) + '&id=' + encodeURIComponent(c.id), { method: 'POST' });
+  $('render').disabled = false; const box = $('result'); box.innerHTML = '';
+  const pre = document.createElement('pre'); pre.textContent = r.output || r.error || ''; box.appendChild(pre);
+  if (r.png) { const a = document.createElement('a'); a.href = r.png; a.target = '_blank'; a.textContent = 'Open PNG'; box.appendChild(a); const im = document.createElement('img'); im.src = r.png; box.appendChild(im); }
+};
+$('add').onclick = () => {
+  commit(); let n = data.cards.length + 1, id; do { id = 'card-' + String(n++).padStart(2, '0'); } while (data.cards.some(c => c.id === id));
+  data.cards.push({ id, kicker: '', title: 'New [headline]', body: '', cta: 'example.com', alt: '', status: 'draft' }); setDirty(true); select(data.cards.length - 1);
+};
+$('dup').onclick = () => {
+  commit(); const c = card(); if (!c) return; let id = c.id + '-copy', n = 2; while (data.cards.some(x => x.id === id)) id = c.id + '-copy' + n++;
+  data.cards.splice(cur + 1, 0, JSON.parse(JSON.stringify({ ...c, id, status: 'draft' }))); setDirty(true); select(cur + 1);
+};
+let delArmed = false;
+$('del').onclick = () => {
+  if (!delArmed) { delArmed = true; $('del').textContent = 'Click again to delete'; setTimeout(() => { delArmed = false; $('del').textContent = 'Delete card'; }, 3000); return; }
+  delArmed = false; $('del').textContent = 'Delete card'; data.cards.splice(cur, 1); setDirty(true); renderList(); select(cur);
+};
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+new ResizeObserver(() => { if (data.cards.length) layoutPreview(); }).observe($('stageBox'));
+$('zoom').addEventListener('change', layoutPreview);
+loadFiles();
+</script></body></html>

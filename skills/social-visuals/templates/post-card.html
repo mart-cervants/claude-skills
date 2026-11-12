@@ -4,6 +4,7 @@
   Generic social card. Brand look comes from the brand kit's tokens.json.
   Usage: copy this file to <kit>/.render/post-card.html and serve <kit> over HTTP
   (the page loads ../tokens.json, the logo and fonts relative to this folder).
+  Editor + batch rendering: ../scripts/serve_editor.mjs, ../scripts/render_cards.mjs.
 
   Query parameters:
     w, h      pixel size (default 1080x1080)
@@ -11,10 +12,27 @@
     title     headline; wrap ONE word/phrase in [brackets] to highlight it with the accent
     body      one short supporting line (optional)
     cta       footer text (default: ctaText from tokens.json)
-    bg        optional URL of a TEXT-FREE background image (e.g. AI artwork)
+    bg        optional TEXT-FREE background image: https URL or kit-relative path (e.g. assets/uploads/art.jpg)
+    dim       0..1 darkening over the background image, strongest at the left (default 0.85)
     net       0 to hide the decorative node network (default 1)
-  Example:
-    post-card.html?w=1080&h=1080&kicker=TIP&title=Your%20report%20can%20be%20[automated]&body=Less%20copy-paste.
+    lay       optional JSON with per-element overrides (see below)
+    debug     1 to show safe margins and the fit status
+
+  Layout overrides (lay), all numbers in px of a 1080-wide card (scaled for other sizes):
+    { "title": {"x": 0, "y": -20, "s": 1.1, "hide": false},   // x,y offset from the template
+      "kicker|bar|body|logo|cta|net": {same keys},
+      "extras": [ {"type":"text","text":"...","x":88,"y":200,"size":44,"color":"accent|text|muted","weight":700,"s":1},
+                  {"type":"image","src":"assets/logo.png","x":600,"y":100,"w":200,"s":1} ] }
+  s = size multiplier (font size for text, height for the logo, width for images/bar, zoom for the network).
+
+  Fit rules: the headline shrinks from 80px (at 1080) to 56px while the text block does not fit, in
+  at most 4 lines; with a custom headline size (s != 1) it does not auto-shrink. A card is flagged
+  (data-overflow="1") if text overflows, an element leaves the card, or text overlaps text/logo/image/bar.
+  The render script refuses flagged cards: shorten the copy or move the element.
+
+  Signals for scripts (on <html>): data-ready="1", data-overflow="0|1", data-overflow-reason,
+  data-title-size, data-title-lines. window.__cardApply(lay) re-applies a layout live and returns
+  those signals; window.__cardRects() returns each element's rectangle (used by the editor).
 -->
 <style>
 *{margin:0;box-sizing:border-box}
@@ -27,29 +45,34 @@ html,body{background:var(--bg,#0b0f1a);overflow:hidden}
     linear-gradient(90deg, var(--grid) 1px, transparent 1px);
   background-size:auto,auto,48px 48px,48px 48px}
 .art{position:absolute;inset:0;background-size:cover;background-position:center}
-.scrim{position:absolute;inset:0;background:linear-gradient(90deg,var(--scrim) 0%,transparent 100%)}
+.scrim{position:absolute;inset:0;background:linear-gradient(90deg,var(--scrim) 0%,var(--scrim-end) 100%)}
 svg.net{position:absolute;right:0;top:0;height:100%;width:55%;
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 70%);mask-image:linear-gradient(90deg,transparent 0,#000 70%)}
-.content{position:absolute;left:var(--m);right:var(--m);top:var(--m);bottom:var(--m);display:flex;flex-direction:column;justify-content:center}
+  -webkit-mask-image:linear-gradient(90deg,transparent 40%,#000 85%);mask-image:linear-gradient(90deg,transparent 40%,#000 85%)}
+.content{position:absolute;left:var(--m);right:var(--m);top:var(--m);bottom:calc(var(--m) + var(--logo-base) + var(--gap));display:flex;flex-direction:column;justify-content:center}
 .kicker{font-weight:700;letter-spacing:.14em;color:var(--accent);font-size:var(--k);text-transform:uppercase}
 .title{font-weight:700;line-height:1.08;letter-spacing:-.01em;margin-top:.7em;font-size:var(--t);max-width:88%}
 .title em{font-style:normal;color:var(--accent)}
-.bar{width:var(--bar);height:var(--barh);background:var(--accent);margin:.9em 0 .8em}
+.bar{width:var(--bar);height:var(--barh);background:var(--accent);margin:var(--barmt) 0 var(--barmb)}
 .body{font-weight:400;color:var(--muted);font-size:var(--b);line-height:1.3;max-width:80%;font-family:var(--font-body),var(--font-heading),sans-serif}
 .foot{position:absolute;left:var(--m);right:var(--m);bottom:calc(var(--m) * .7);display:flex;align-items:center;justify-content:space-between}
 .foot img{height:var(--logo);width:auto}
 .cta{font-weight:700;color:var(--muted);font-size:var(--c);letter-spacing:.04em}
+.ex{position:absolute;line-height:1.1;white-space:pre-wrap}
+.dbg{position:absolute;inset:var(--m);border:2px dashed rgba(255,0,200,.7);pointer-events:none;display:none}
+.dbgtxt{position:absolute;left:8px;top:8px;font:600 22px ui-monospace,monospace;color:#ff00c8;display:none;background:rgba(0,0,0,.6);padding:4px 8px}
 </style></head><body>
 <div class="stage" id="stage">
   <div class="art" id="art"></div><div class="scrim" id="scrim"></div>
-  <svg class="net" id="net"></svg>
-  <div class="content">
-    <div class="kicker" id="kicker"></div>
-    <div class="title" id="title"></div>
-    <div class="bar"></div>
-    <div class="body" id="body"></div>
+  <svg class="net" id="net" data-el="net"></svg>
+  <div class="content" id="content">
+    <div class="kicker" id="kicker" data-el="kicker"></div>
+    <div class="title" id="title" data-el="title"></div>
+    <div class="bar" id="bar" data-el="bar"></div>
+    <div class="body" id="body" data-el="body"></div>
   </div>
-  <div class="foot"><img id="logo" alt=""><div class="cta" id="cta"></div></div>
+  <div id="extras"></div>
+  <div class="foot" id="foot"><img id="logo" alt="" data-el="logo"><div class="cta" id="cta" data-el="cta"></div></div>
+  <div class="dbg" id="dbg"></div><div class="dbgtxt" id="dbgtxt"></div>
 </div>
 <script>
 (async () => {
@@ -57,18 +80,20 @@ svg.net{position:absolute;right:0;top:0;height:100%;width:55%;
   const T = await fetch('../tokens.json').then(r => r.json());
   const c = T.colors || {}, f = T.fonts || {};
   const W = +q.get('w') || 1080, H = +q.get('h') || 1080, s = Math.min(W, H) / 1080;
-  const st = document.getElementById('stage');
+  const st = document.getElementById('stage'), de = document.documentElement;
   const v = (k, x) => st.style.setProperty(k, x);
+  const $ = id => document.getElementById(id);
   const hex2rgba = (h, a) => { const n = parseInt(h.replace('#', ''), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
-  document.documentElement.style.setProperty('--bg', c.background || '#0b0f1a');
+  de.style.setProperty('--bg', c.background || '#0b0f1a');
   st.style.width = W + 'px'; st.style.height = H + 'px';
   v('--bg', c.background || '#0b0f1a'); v('--text', c.text || '#f3f4f6'); v('--muted', c.muted || '#cbd5e1');
   v('--accent', c.accent || '#38bdf8'); v('--grid', hex2rgba(c.line || '#1f2937', .55));
   v('--glow1', hex2rgba(c.accent || '#38bdf8', .14)); v('--glow2', hex2rgba(c.accent2 || '#6366f1', .22));
-  v('--scrim', hex2rgba(c.background || '#0b0f1a', .85));
-  v('--m', Math.round(88 * s) + 'px'); v('--k', Math.round(28 * s) + 'px'); v('--t', Math.round(80 * s) + 'px');
-  v('--b', Math.round(38 * s) + 'px'); v('--c', Math.round(28 * s) + 'px'); v('--logo', Math.round(96 * s) + 'px');
-  v('--bar', Math.round(120 * s) + 'px'); v('--barh', Math.round(8 * s) + 'px');
+  const dim = q.get('dim') != null ? Math.max(0, Math.min(1, +q.get('dim'))) : 0.85;
+  v('--scrim', hex2rgba(c.background || '#0b0f1a', dim)); v('--scrim-end', hex2rgba(c.background || '#0b0f1a', dim * 0.35));
+  const M = Math.round(88 * s);
+  v('--m', M + 'px'); v('--gap', Math.round(24 * s) + 'px'); v('--logo-base', Math.round(96 * s) + 'px');
+  v('--barmt', Math.round(48 * s) + 'px'); v('--barmb', Math.round(32 * s) + 'px');
   // fonts from tokens (paths relative to the kit root)
   const h = f.heading || {};
   if (h.weight400 || h.weight700) {
@@ -77,18 +102,20 @@ svg.net{position:absolute;right:0;top:0;height:100%;width:55%;
   }
   v('--font-heading', h.family ? `"${h.family}"` : 'system-ui'); v('--font-body', (f.body && f.body.family) ? `"${f.body.family}"` : 'system-ui');
   // text
-  document.getElementById('kicker').textContent = q.get('kicker') || '';
+  const hasBody = !!q.get('body'), hasKicker = !!q.get('kicker');
+  $('kicker').textContent = q.get('kicker') || '';
   const esc = t => t.replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
-  document.getElementById('title').innerHTML = esc(q.get('title') || '').replace(/\[(.+?)\]/g, '<em>$1</em>');
-  document.getElementById('body').textContent = q.get('body') || '';
-  document.getElementById('cta').textContent = q.get('cta') || T.ctaText || '';
-  document.getElementById('logo').src = '../' + (T.logo || 'assets/logo.png');
+  $('title').innerHTML = esc(q.get('title') || '').replace(/\[(.+?)\]/g, '<em>$1</em>');
+  $('body').textContent = q.get('body') || '';
+  $('cta').textContent = q.get('cta') || T.ctaText || '';
+  const logo = $('logo'); logo.src = '../' + (T.logo || 'assets/logo.png');
   const bg = q.get('bg');
-  if (bg) document.getElementById('art').style.backgroundImage = 'url(' + bg + ')'; else document.getElementById('scrim').style.display = 'none';
+  if (bg) $('art').style.backgroundImage = 'url(' + (/^(https?:|data:|\/)/.test(bg) ? bg : '../' + bg) + ')'; else $('scrim').style.display = 'none';
+  const netOn = q.get('net') !== '0';
   // decorative node network
-  if (q.get('net') !== '0') {
+  if (netOn) {
     const rng = seed => () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
-    const svg = document.getElementById('net'), w = W * 0.55, hh = H, r = rng(11), pts = [];
+    const svg = $('net'), w = W * 0.55, hh = H, r = rng(11), pts = [];
     svg.setAttribute('viewBox', `0 0 ${w} ${hh}`);
     for (let i = 0; i < 4000 && pts.length < 13; i++) {
       const p = { x: r() * w, y: 30 + r() * (hh - 60) };
@@ -104,6 +131,122 @@ svg.net{position:absolute;right:0;top:0;height:100%;width:55%;
       g += `<circle cx="${p.x}" cy="${p.y}" r="${rad}" fill="url(#lg)"/>`; });
     svg.innerHTML = g;
   }
-  document.documentElement.setAttribute('data-ready', '1');
+  await document.fonts.ready;
+  await (logo.decode ? logo.decode().catch(() => {}) : Promise.resolve());
+
+  // ---------- layout, fit and guard ----------
+  const BASE = { kicker: 28, title: 80, body: 38, cta: 28, logo: 96, bar: 120, barh: 8 };
+  const NAMES = ['kicker', 'title', 'bar', 'body', 'logo', 'cta', 'net'];
+  const E = { kicker: $('kicker'), title: $('title'), bar: $('bar'), body: $('body'), logo, cta: $('cta'), net: $('net') };
+  const TEXTY = ['kicker', 'title', 'body', 'cta'];
+  const MAX_LINES = 4, MIN_T = Math.round(56 * s), debug = q.get('debug') === '1';
+  const LBL = { kicker: 'kicker', title: 'headline', bar: 'accent bar', body: 'support line', logo: 'logo', cta: 'footer text', net: 'network graphic' };
+  const label = el => { const n = el.dataset.el; if (LBL[n]) return LBL[n]; const i = +n.slice(1) + 1; return el.dataset.kind === 'image' ? `image ${i}` : `text box ${i}`; };
+  const visible = el => el.style.display !== 'none' && el.getClientRects().length > 0;
+  const tight = el => {
+    if (!(el instanceof HTMLElement) || el.tagName === 'IMG' || el.classList.contains('bar')) return el.getBoundingClientRect();
+    const r = document.createRange(); r.selectNodeContents(el); const rr = r.getBoundingClientRect();
+    return rr.width > 0 ? rr : el.getBoundingClientRect();
+  };
+  const rectOf = el => { const r = tight(el); return { l: r.left, t: r.top, r: r.right, b: r.bottom }; };
+
+  async function applyLayout(lay) {
+    lay = lay || {};
+    const g = n => Object.assign({ x: 0, y: 0, s: 1, hide: false }, lay[n] || {});
+    const L = {}; NAMES.forEach(n => L[n] = g(n));
+    v('--k', BASE.kicker * s * L.kicker.s + 'px'); v('--b', BASE.body * s * L.body.s + 'px'); v('--c', BASE.cta * s * L.cta.s + 'px');
+    v('--logo', BASE.logo * s * L.logo.s + 'px'); v('--bar', BASE.bar * s * L.bar.s + 'px'); v('--barh', BASE.barh * s * L.bar.s + 'px');
+    NAMES.forEach(n => {
+      const moved = L[n].x || L[n].y, zoomed = n === 'net' && L.net.s !== 1;
+      E[n].style.transform = (moved || zoomed) ? `translate(${L[n].x * s}px, ${L[n].y * s}px)` + (zoomed ? ` scale(${L.net.s})` : '') : '';
+      let hide = L[n].hide;
+      if (n === 'bar' && !hasBody) hide = true;
+      if (n === 'kicker' && !hasKicker) hide = true;
+      if (n === 'net' && !netOn) hide = true;
+      E[n].style.display = hide ? 'none' : '';
+    });
+    // extras: free text boxes and images
+    const box = $('extras'); box.innerHTML = '';
+    const imgs = [];
+    (lay.extras || []).forEach((e, i) => {
+      if (e.hide) return;
+      const d = e.type === 'image' ? document.createElement('img') : document.createElement('div');
+      d.className = 'ex'; d.dataset.el = 'x' + i; d.dataset.kind = e.type === 'image' ? 'image' : 'text';
+      d.style.left = (e.x || 0) * s + 'px'; d.style.top = (e.y || 0) * s + 'px';
+      const k = e.s || 1;
+      if (e.type === 'image') { d.src = '../' + String(e.src || '').replace(/^\/+/, ''); d.style.width = (e.w || 200) * s * k + 'px'; d.alt = ''; imgs.push(d); }
+      else {
+        d.textContent = e.text || ''; d.style.fontSize = (e.size || 44) * s * k + 'px'; d.style.fontWeight = e.weight || 700;
+        d.style.color = e.color === 'accent' ? 'var(--accent)' : e.color === 'muted' ? 'var(--muted)' : 'var(--text)';
+        d.style.maxWidth = Math.max(100, W - (e.x || 0) * s - M) + 'px';
+      }
+      box.appendChild(d);
+    });
+    await Promise.all(imgs.map(i => (i.decode ? i.decode().catch(() => {}) : Promise.resolve())));
+
+    // headline fit: automatic unless the headline has a custom size
+    const title = E.title, customSize = L.title.s !== 1;
+    const custom = ['kicker', 'title', 'bar', 'body'].some(n => L[n].x || L[n].y || L[n].s !== 1 || L[n].hide);
+    let size = Math.round(BASE.title * s * L.title.s);
+    title.style.fontSize = size + 'px';
+    let res = measure(custom);
+    if (!customSize) while (res.reasons.length && size > MIN_T) { size -= 2; title.style.fontSize = size + 'px'; res = measure(custom); } // shrink only for text-fit problems, never to dodge an overlap
+    de.dataset.titleSize = String(Math.round(res.size)); de.dataset.titleLines = String(res.lines);
+    const all = [...res.reasons, ...res.place];
+    de.dataset.overflow = all.length ? '1' : '0'; de.dataset.overflowReason = all.join('; ');
+    if (debug) {
+      $('dbg').style.display = 'block';
+      const t = $('dbgtxt'); t.style.display = 'block';
+      t.textContent = `title ${Math.round(res.size)}px / ${res.lines} lines / ` + (all.length ? 'OVERFLOW: ' + all.join('; ') : 'fits');
+    }
+    return { ...de.dataset };
+  }
+
+  function measure(custom) {
+    const title = E.title, content = $('content');
+    const size = parseFloat(getComputedStyle(title).fontSize);
+    const lines = visible(title) ? Math.round(title.getBoundingClientRect().height / (size * 1.08)) : 0;
+    const reasons = [], place = [];
+    if (lines > MAX_LINES) reasons.push(`headline has ${lines} lines (max ${MAX_LINES})`);
+    if (visible(title) && title.scrollWidth > title.clientWidth + 1) reasons.push('a headline word is wider than the card');
+    if (visible(E.body) && E.body.scrollWidth > E.body.clientWidth + 1) reasons.push('support line too wide');
+    if (!custom) { // template flow: text block must fit between the margin and the footer
+      const cr = content.getBoundingClientRect();
+      const first = visible(E.kicker) ? E.kicker : title, last = visible(E.body) ? E.body : title;
+      if (first.getBoundingClientRect().top < cr.top - 1 || last.getBoundingClientRect().bottom > cr.bottom + 1) reasons.push('text block taller than the safe area');
+    }
+    // every visible element must stay inside the card
+    const named = [...document.querySelectorAll('[data-el]')].filter(el => el.dataset.el !== 'net' && visible(el));
+    for (const el of named) {
+      const r = tight(el);
+      if (r.left < -1 || r.top < -1 || r.right > W + 1 || r.bottom > H + 1) place.push(`${label(el)} leaves the card`);
+    }
+    // text must not overlap other text, the logo, images or the accent bar
+    const isText = el => TEXTY.includes(el.dataset.el) || el.dataset.kind === 'text';
+    for (let i = 0; i < named.length; i++) for (let j = i + 1; j < named.length; j++) {
+      if (!isText(named[i]) && !isText(named[j])) continue;
+      const a = tight(named[i]), b = tight(named[j]);
+      const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      if (ox > 6 && oy > 6) place.push(`${label(named[i])} overlaps ${label(named[j])}`);
+    }
+    return { size, lines, reasons, place };
+  }
+
+  let initial = {}; try { initial = JSON.parse(q.get('lay') || '{}'); } catch {}
+  window.__cardApply = lay => applyLayout(lay);
+  window.__cardRects = () => {
+    const out = {};
+    document.querySelectorAll('[data-el]').forEach(el => {
+      if (!visible(el)) return;
+      if (el.dataset.el === 'net') { const r = el.getBoundingClientRect(); out.net = { l: r.left, t: r.top, r: r.right, b: r.bottom }; }
+      else out[el.dataset.el] = rectOf(el);
+    });
+    return out;
+  };
+  await applyLayout(initial);
+  // let the browser finish decoding/resampling images and painting before signalling readiness
+  await Promise.all([...document.images].map(i => (i.decode ? i.decode().catch(() => {}) : Promise.resolve())));
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  de.dataset.ready = '1';
 })();
 </script></body></html>

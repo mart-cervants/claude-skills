@@ -56,14 +56,22 @@ missing, run `social-brand-kit` first; don't assume anything about the brand.
    checklist (general + the language pack + the brand's own banned phrases).
    Fix failures before showing the user; report meaning changes.
 6. **Visuals.** For each post, use the `social-visuals` skill with the kit's
-   tokens. For Reels from cards, produce the card sequence there.
+   tokens: write the month's card data (`calendar/YYYY-MM.cards.json`, with alt text)
+   and batch-render it. For Reels from cards, produce the card sequence there. Pass
+   each card's alt text to Metricool as `mediaAltText`.
 7. **Review round.** Show the full month as one table (date, pillar, format,
-   hook, full text, visual, CTA). Let the user edit, drop or reorder. Don't
+   hook, full text, visual, CTA) **and give the card editor link** from
+   `social-visuals` so the user can see and edit every visual before anything is
+   rendered or uploaded. Let the user edit, drop, reorder and approve. Don't
    schedule yet.
-8. **Schedule (Metricool MCP).** After explicit approval, create the posts as
-   drafts / for review, one per date, in the time zone from `brand-profile.md`.
-   Test with ONE post first and confirm it appears in the Metricool planner with
-   the right text, date and image before creating the rest. Mind the plan's
+8. **Schedule (Metricool MCP).** After explicit approval, create the posts with
+   `createScheduledPost` and `info.draft = true` (drafts), one per date, in the
+   brand's IANA time zone from `getBrandSettings`. Images must be public URLs
+   (host them first). Test with ONE post first and confirm it appears in the
+   Metricool planner with the right text, date and image before creating the
+   rest. Only after the user's final OK, switch drafts to scheduled
+   (`updateScheduledPost`, `draft = false`). `createScheduledPostForReview`
+   needs a team-management plan, so don't rely on it on Free. Mind the plan's
    monthly scheduling cap (Free: 20 posts/month).
 9. **Close the loop.** Monthly, pull Facebook post/Reel analytics and write
    `<kit>/results.md` (what worked, what to stop, experiments). `content-ideas`
@@ -75,8 +83,9 @@ missing, run `social-brand-kit` first; don't assume anything about the brand.
   `update_schedule_post`, `get_best_time_to_post`, `get_facebook_posts`,
   `get_facebook_reels`, `get_facebook_stories`. The list changes — check the
   tools actually available in the session.
-- Unconfirmed until tested: whether media must be a public URL, how "for review"
-  posts behave. Record what you learn in `SETUP.md`.
+- Confirmed from the tool definitions (see `SETUP.md` §5): media = public URLs,
+  drafts via `draft = true`, review flow needs a team plan. Still to test:
+  how drafts behave in the planner and whether public image URLs attach.
 - Use only the canonical link(s) from `brand-profile.md` in posts.
 - Respect `guardrails.md` identity rules (names, photos, employer mentions).
 - Repurposing others' content is penalized by Meta; inspiration gives patterns,

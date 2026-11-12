@@ -30,6 +30,15 @@ and `tokens.json`. These rules apply to any brand.
 | Profile picture | 1024×1024 (circle-safe: keep content in the central ~70%) |
 | Story / Reel | 1080×1920 |
 
+## Text fit and testing
+
+- Shrink-to-fit needs a **minimum size** (56 px on a 1080 card) and a **maximum number of
+  lines** (4). If the copy still doesn't fit, shorten it; never go below the minimum.
+- Test every template with the **longest realistic copy**, not the example text.
+- Stay with text, layout and vector shapes. Photos only as text-free full-bleed
+  backgrounds; no composited cut-outs.
+- Write alt text for every published image.
+
 ## Carousels and Reel card sequences
 
 - 3–6 cards. Card 1 = hook; last card = CTA. One step or point per card.
