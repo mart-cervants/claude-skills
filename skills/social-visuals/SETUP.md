@@ -141,5 +141,6 @@ Check once whether the scheduler copies the image at creation (then objects can
 be removed later) or links to your URL (then keep them): compare the media URL
 returned by `getScheduledPosts` with yours.
 
-- [ ] Confirmed: the scheduler accepts the chosen public URLs
-- [ ] Confirmed whether the scheduler copies or links the image
+- [x] Confirmed (Metricool, 2026-11-11): the scheduler accepts the public URLs
+- [x] Confirmed: Metricool **copies** the image to its own storage when the post is created, so the object can be
+      removed from the host afterwards (keep it until the post is published, to be safe)

@@ -61,13 +61,22 @@ Tools exposed by the Metricool MCP: `getBrandSettings`, `getScheduledPosts`,
   on a brand with no posts yet, so treat it as a general benchmark until the Page
   has its own history. In the first check it peaked around 10:00 and 12:00 on weekdays.
 
-## 6. Still to confirm (then write the answer here)
+## 6. Confirmed by the first test draft (2026-11-11, Free plan)
 
-- [ ] Draft posts: do they appear in the Metricool planner as drafts and stay
-      unpublished until approved/scheduled by hand?
-- [ ] Does a public image URL attach correctly (try a card hosted on the brand's site)?
+- [x] A public image URL attaches via `info.media`. **Metricool copies the image to its own storage**
+      (`static.metricool.com/planner/...`), so the host URL only needs to exist when the post is created.
+- [x] `createScheduledPost` with `draft: true` creates a post that `getScheduledPosts` returns with
+      `draft: true` and provider status `PENDING`. Alt text (`mediaAltText`) and `facebookData.type: "POST"` are accepted.
+- [x] `autoPublish: false` is accepted (Metricool then asks you to publish by hand from its mobile app).
+      Used for the first test as an extra safeguard.
+- The response includes `plannerUrl` (open the post in Metricool) and a stable `uuid`.
+
+## 7. Still to confirm (then write the answer here)
+
+- [ ] Does `autoPublish: true` publish at the scheduled time? (Watch the first real one.)
 - [ ] Does scheduling beyond 30 days work for Facebook through Metricool?
-- [ ] Does `autoPublish: true` publish at the scheduled time (watch the first one)?
+- [ ] Do drafts count toward the Free plan's 20 scheduled posts per month?
+- [ ] How the post looks after publishing (crop of the 1080x1080 card, link preview, text truncation).
 
 ## Sources
 
