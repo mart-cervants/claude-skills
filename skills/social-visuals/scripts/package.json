@@ -1,0 +1,12 @@
+{
+  "name": "social-visuals-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Batch card renderer for the social-visuals skill (uses the system Chrome via playwright-core).",
+  "scripts": {
+    "render": "node render_cards.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.65.0"
+  }
+}

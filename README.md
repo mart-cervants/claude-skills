@@ -19,6 +19,10 @@ ln -s "$(pwd)/skills/<skill-name>" ~/.claude/skills/<skill-name>
 
 | Skill | What it does |
 |---|---|
+| `social-brand-kit` | Set up and locate the per-project brand kit (brand profile, voice, guardrails, pillars, visual tokens, inspiration) by reading a website, social page or description; shared anti-slop quality rules (general + per-language packs). |
+| `content-ideas` | Build a sourced, scored, format-aware backlog of post ideas for any brand from the user's raw inputs, conversations, guided research and analyzed inspiration (no ideas without a source; patterns, never copied content). |
+| `facebook-page-content` | Plan, write, review and schedule Facebook Page posts for any brand (monthly calendar, copy in the brand voice and language, anti-slop gate) via the Metricool MCP; nothing goes out unapproved. |
+| `social-visuals` | On-brand social images for any brand from its kit tokens: Playwright-rendered HTML cards (exact text and logo) plus optional text-free AI artwork via an image MCP such as Higgsfield. |
 | `google-ads-manager` | Create, update, report on, and manage Google Ads campaigns/ad groups/keywords/budgets via the official API client, with a mandatory dry-run-before-spend safety gate. |
 | `saleshandy-account-health` | Check Saleshandy email account/domain warmup status and deliverability readiness before sending. |
 | `saleshandy-build-sequence` | Create and configure Saleshandy outreach sequences with cold-email best practices baked in. |
