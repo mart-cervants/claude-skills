@@ -1,6 +1,6 @@
 ---
 name: social-visuals
-description: Use when the user needs an image or visual for a social media post, cover, carousel, Reel card sequence or ad for any brand. Renders on-brand HTML templates with Playwright using the brand kit's tokens, logo and fonts, so text and logo are always exact; uses AI image models (e.g. the Higgsfield MCP) only for text-free background art, then composites. Network-agnostic — used by facebook-page-content and other posting skills.
+description: Use when the user needs an image or visual for a social media post, cover, carousel, Reel card sequence or ad for any brand. Renders on-brand HTML templates with Playwright using the brand kit's tokens, logo and fonts, so text and logo are always exact; uses AI image models (the Gemini API script, or an image MCP such as Higgsfield) only for text-free background art, then composites. Network-agnostic — used by facebook-page-content and other posting skills.
 ---
 
 # Social Visuals
@@ -34,7 +34,8 @@ the user for them or use the defaults in `tokens.json` and say so.
 | File | Read when |
 |---|---|
 | `reference/visual-principles.md` | Always, before designing (generic craft rules) |
-| `reference/higgsfield.md` | Using AI artwork |
+| `reference/higgsfield.md` | Using AI artwork through an image MCP |
+| `reference/gemini.md` + `scripts/gen_background.mjs` | Using AI artwork through the Gemini API (key only; 3 candidates with a text-contrast report) |
 | `templates/post-card.html` | The default card template (square / portrait / Reel frame) |
 | `scripts/serve_editor.mjs` + `templates/editor.html` | Local review/edit canvas: live preview, drag/resize/snap, layers, fit warnings, approve, save, render |
 | `scripts/render_cards.mjs` | Batch rendering with safety checks (see `SETUP.md`) |
@@ -54,7 +55,7 @@ the user for them or use the defaults in `tokens.json` and say so.
    fonts) and a negative list. Existing series skip this step.
 4. **Choose method.** Typographic card by default. Use AI artwork only if it adds
    value, as a text-free full-bleed background; check the cost first (see
-   `reference/higgsfield.md`). Don't composite cut-out product images or complex
+   `reference/gemini.md` or `reference/higgsfield.md`). Don't composite cut-out product images or complex
    photos: stay with text, layout and vector shapes.
 5. **Write the card data** (`<kit>/calendar/YYYY-MM.cards.json`, see `SETUP.md`): one
    entry per card with `id`, `kicker`, `title` (wrap the highlight in `[brackets]`),
