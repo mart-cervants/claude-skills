@@ -14,10 +14,11 @@ via `Social brand kit: <path>` in the project's `CLAUDE.md`.
   idea-backlog.md      sourced, scored ideas (owned by content-ideas)
   results.md           monthly review of what worked (owned by the posting skills)
   assets/              logo, fonts, reusable images
-  designs/             finished brand designs (covers, profile picture, templates)
+  designs/             brand designs: one-off files at the top level are committed (cover, profile picture);
+                       per-post renders go in subfolders (designs/YYYY-MM/) and are NOT committed
   inspiration/         references the user likes (images) + notes.md (patterns)
     viral/             analyzed viral/high-performing references (private)
-  calendar/            YYYY-MM.md monthly calendars (planned and approved posts)
+  calendar/            YYYY-MM.md calendars and YYYY-MM.cards.json card data (local working files, NOT committed)
   .render/             temporary folder for rendering (gitignored)
 ```
 
@@ -35,6 +36,14 @@ via `Social brand kit: <path>` in the project's `CLAUDE.md`.
 
 - Skills never store brand facts inside the skills repo; only generic method.
 - Don't place the kit inside deployed folders (`public/`, `static/`, `dist/`).
-- Commit the kit with the project unless it contains sensitive information; in
-  that case keep the kit outside git or gitignore the sensitive files.
+- Commit only the **stable** part of the kit (profile, voice, guardrails, pillars, visual identity,
+  tokens, logo, fonts, brand designs). Copy `templates/kit.gitignore` to `<kit>/.gitignore`.
+- **Per-post files are local only:** `calendar/*` (calendars + cards JSON), `designs/<month>/`
+  (renders), `assets/uploads/`, `assets/backgrounds/` (AI candidates). They change with every post;
+  committing them would mean a branch, PR and merge for each post. The source of truth after
+  scheduling is the scheduler (text, date) and the media host (final images).
+- Living docs that change often (`idea-backlog.md`, `results.md`) are committed by default; the
+  user may gitignore them too. Local-only files have no backup: say so once, and suggest copying
+  the month's `*.cards.json` somewhere safe if they care.
+- If the kit contains sensitive information, keep it outside git or gitignore those files.
 - `inspiration/` is gitignored by default (others' content; copyright).

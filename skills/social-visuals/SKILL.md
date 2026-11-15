@@ -92,7 +92,9 @@ the user for them or use the defaults in `tokens.json` and say so.
    ~400 px wide, spacing, accents and spelling. Fix everything found in one batch,
    check once more, then stop polishing.
 10. **Deliver.** Give the user the file paths. Upload only approved images to the
-   brand's media host (see `SETUP.md` and the kit's `publishing.md`).
+   brand's media host (see `SETUP.md` and the kit's `publishing.md`). Renders, uploads and
+   cards JSON are local working files: **don't commit them** (the kit's `.gitignore` covers it;
+   if it doesn't, add `templates/kit.gitignore` from `social-brand-kit` first).
 
 ## Do not
 

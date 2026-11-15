@@ -32,8 +32,9 @@ node <skills>/social-visuals/scripts/gen_background.mjs --kit marketing/social \
   Better than `--edit` when the style must change; expect faint leftovers of the reference.
 - Output: `<kit>/assets/backgrounds/<name>-<i>.jpg` and a sidecar `.json` (prompt, model, date,
   contrast grid). Files are numbered, never overwritten. The folder writes its own `.gitignore`
-  (`*`, except `.gitignore` and `log.md`): candidates are never committed; keep a hand-written
-  `log.md` (chosen file, prompt, model, date, where used).
+  (`*`, which also hides that file): candidates are never committed. Keep a local `log.md` of the
+  chosen ones (file, prompt, model, date, R2 URL) — it is local too, so the media host is where
+  the final background lives.
 - Then upload the pick in the card editor as the card background and dim/scrim as needed.
 
 ## Using the pick on a card

@@ -11,7 +11,7 @@
 // "no text / no logos / no people") are appended automatically. The key is read from
 // GEMINI_API_KEY (env or the nearest .env.local above the current directory) and is never printed.
 // Output: <kit>/assets/backgrounds/<name>-<i>.<ext> (edits: <name>-edit-<i>) + <same>.json (prompt, model,
-// contrast report). The folder ignores itself (writes a .gitignore); keep a tracked log.md for chosen ones.
+// contrast report). The folder ignores itself (writes a .gitignore containing `*`): nothing here is committed.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import sharp from "sharp";
@@ -115,7 +115,7 @@ const outDir = join(kit, "assets", "backgrounds");
 mkdirSync(outDir, { recursive: true });
 // Candidates are disposable: the folder ignores itself. Only .gitignore and a hand-kept log.md are tracked.
 const gi = join(outDir, ".gitignore");
-if (!existsSync(gi)) writeFileSync(gi, "# generated candidates are not committed; keep log.md for chosen ones\n*\n!.gitignore\n!log.md\n");
+if (!existsSync(gi)) writeFileSync(gi, "*\n"); // ignores everything in this folder, including this file
 const prefix = edit ? `${name}-edit` : name;
 let start = 1;
 while (["jpg", "png"].some((e) => existsSync(join(outDir, `${prefix}-${start}.${e}`)))) start++;

@@ -78,6 +78,9 @@ missing, run `social-brand-kit` first; don't assume anything about the brand.
    (`updateScheduledPost`, `draft = false`). `createScheduledPostForReview`
    needs a team-management plan, so don't rely on it on Free. Mind the plan's
    monthly scheduling cap (Free: 20 posts/month).
+   The month's calendar, cards JSON and renders are **local working files, not committed**
+   (see `social-brand-kit/templates/kit.gitignore`); once scheduled, Metricool holds the text and
+   date and the media host holds the image. Record the draft ids in the kit's `publishing.md`.
 9. **Close the loop.** Monthly, pull Facebook post/Reel analytics and write
    `<kit>/results.md` (what worked, what to stop, experiments). `content-ideas`
    reads it.
