@@ -64,6 +64,11 @@ missing, run `social-brand-kit` first; don't assume anything about the brand.
    `social-visuals` so the user can see and edit every visual before anything is
    rendered or uploaded. Let the user edit, drop, reorder and approve. Don't
    schedule yet.
+   **This review is mandatory every time a visual changes** — including swapping the image
+   of an existing Metricool draft. Start the editor, give the link, wait for the saved
+   `approved` status (see the gate in `social-visuals`), and only then render, upload
+   and call `updateScheduledPost`. Show exactly what you will send before updating a
+   post (updates overwrite it and cannot be undone).
 8. **Schedule (Metricool MCP).** After explicit approval, create the posts with
    `createScheduledPost` and `info.draft = true` (drafts), one per date, in the
    brand's IANA time zone from `getBrandSettings`. Images must be public URLs

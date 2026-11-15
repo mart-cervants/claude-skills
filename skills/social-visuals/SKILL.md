@@ -73,6 +73,14 @@ the user for them or use the defaults in `tokens.json` and say so.
    `layout` offsets in the cards file, so the PNG always matches the preview.
    Wait for their approval. If they ask for layout/style changes (not just wording),
    edit `templates/post-card.html` and tell them to refresh.
+   **MANDATORY GATE — never skip it, not even for a "small" change.** Every time a card's
+   look changes (text, layout, background image, dim, a re-render of an already approved
+   card, replacing the image of an existing Metricool draft), set its `status` back to
+   `draft`, start the editor, give the user the link, and wait. Proceed only when the
+   saved cards file says `"status": "approved"` for that card (read the file; the user
+   saying "approved" is not enough if it isn't saved). Rendering previews for your own
+   checks goes to a scratch folder, never to the kit's `designs/`. Render to `designs/`,
+   upload and update drafts only after this gate, and use `--approved-only`.
 7. **Longest-copy test.** Before a template joins a series, render it with the longest
    realistic headline and support line, not just the example text.
 8. **Render approved cards** with `scripts/render_cards.mjs --approved-only` (or the
@@ -94,6 +102,7 @@ the user for them or use the defaults in `tokens.json` and say so.
 - Ship a visual with a typo — fix the text in the card data and re-render; never regenerate with AI.
 - Skip the overflow checks or edit the PNG by hand to hide a text overflow; shorten the copy.
 - Render, upload or schedule cards the user hasn't reviewed and approved in the editor.
+- Skip the editor review because the change "is only a background swap" or "was already approved before"; any visual change needs a fresh review.
 - Upload images the brand doesn't have the rights to, or real client, employer or personal photos.
 - Copy another creator's visual; take structure/style cues from `inspiration/`
   and make the content and layout your own.
