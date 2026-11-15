@@ -110,7 +110,13 @@ svg.net{position:absolute;right:0;top:0;height:100%;width:55%;
   $('cta').textContent = q.get('cta') || T.ctaText || '';
   const logo = $('logo'); logo.src = '../' + (T.logo || 'assets/logo.png');
   const bg = q.get('bg');
-  if (bg) $('art').style.backgroundImage = 'url(' + (/^(https?:|data:|\/)/.test(bg) ? bg : '../' + bg) + ')'; else $('scrim').style.display = 'none';
+  let artLoad = Promise.resolve();
+  if (bg) {
+    const artUrl = /^(https?:|data:|\/)/.test(bg) ? bg : '../' + bg;
+    $('art').style.backgroundImage = 'url(' + artUrl + ')';
+    // Wait for the background (remote URLs are slow) and flag a failure so the renderer can fail the card.
+    artLoad = new Promise(r => { const im = new Image(); im.onload = () => r(); im.onerror = () => { document.documentElement.dataset.bgfail = '1'; r(); }; im.src = artUrl; });
+  } else $('scrim').style.display = 'none';
   const netOn = q.get('net') !== '0';
   // decorative node network
   if (netOn) {
@@ -133,6 +139,7 @@ svg.net{position:absolute;right:0;top:0;height:100%;width:55%;
   }
   await document.fonts.ready;
   await (logo.decode ? logo.decode().catch(() => {}) : Promise.resolve());
+  await artLoad;
 
   // ---------- layout, fit and guard ----------
   const BASE = { kicker: 28, title: 80, body: 38, cta: 28, logo: 96, bar: 120, barh: 8 };

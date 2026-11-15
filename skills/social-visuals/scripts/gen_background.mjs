@@ -4,11 +4,14 @@
 //   node gen_background.mjs --kit marketing/social --name p1-lanzamiento \
 //     --prompt "abstract network graph converging into one glowing node" \
 //     [--text-zone left|right|top|bottom|center|none] [--ratio 4:5] [--size 1K] [--n 3] [--dry]
+//     [--edit <image>]   edit that image: --prompt is then the change instruction (composition is kept)
+//     [--ref <image>]    use an image as a composition/palette guide for a fresh generation (repeatable)
 //
 // The prompt is the creative IDEA only. Brand rules (palette from tokens.json,
 // "no text / no logos / no people") are appended automatically. The key is read from
 // GEMINI_API_KEY (env or the nearest .env.local above the current directory) and is never printed.
-// Output: <kit>/assets/backgrounds/<name>-<i>.<ext> + <same>.json (prompt, model, contrast report).
+// Output: <kit>/assets/backgrounds/<name>-<i>.<ext> (edits: <name>-edit-<i>) + <same>.json (prompt, model,
+// contrast report). The folder ignores itself (writes a .gitignore); keep a tracked log.md for chosen ones.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import sharp from "sharp";
@@ -31,6 +34,10 @@ const ratio = flag("ratio", "1:1");
 const size = flag("size", "1K");
 const n = Math.max(1, Math.min(Number(flag("n", "3")), 6));
 const dry = bool("dry");
+const edit = flag("edit");
+const refs = [];
+for (let i; (i = argv.indexOf("--ref")) >= 0; ) refs.push(argv.splice(i, 2)[1]);
+for (const f of [edit, ...refs].filter(Boolean)) if (!existsSync(f)) { console.error(`Image not found: ${f}`); process.exit(1); }
 if (!name || !idea || !ZONES.includes(zone) || !PRICE[size]) {
   console.error(`Usage: gen_background.mjs --kit <dir> --name <id> --prompt "<idea>" [--text-zone ${ZONES.join("|")}] [--ratio 1:1] [--size 1K|2K|4K] [--n 3] [--dry]`);
   process.exit(1);
@@ -45,7 +52,10 @@ const zoneText = zone === "none" ? "" :
   ` Composition: keep the ${zone} ${zone === "center" ? "area" : "third"} of the frame calm, dark and low-detail (open negative space for a headline); put visual interest elsewhere.`;
 const rules = ` Dark background close to ${background}${accent ? `, a single ${accent} accent` : ""}${accent2 ? ` with at most a hint of ${accent2}` : ""}.` +
   " Generous empty space, soft depth, minimal, high contrast. No text, no letters, no numbers, no logos, no watermarks, no people, no robots, no laptops.";
-const fullPrompt = idea.trim().replace(/\.?$/, ".") + zoneText + rules;
+const lead = idea.trim().replace(/\.?$/, ".");
+const fullPrompt = edit
+  ? lead + " Keep the composition, the layout, the empty dark areas, the palette and the position of the brightest point. Do not change any other elements of the image. No text, no letters, no logos, no people."
+  : lead + zoneText + rules + (refs.length ? " Use the attached image(s) only as a guide for composition and palette; do not copy its shapes." : "");
 
 console.log(`Model: ${MODEL} | ${n} × ${ratio} @ ${size} | estimated cost: US$${(PRICE[size] * n).toFixed(3)}`);
 console.log(`Prompt:\n  ${fullPrompt}\n`);
@@ -103,8 +113,14 @@ const mark = (c) => (c >= 4.5 ? "✓" : c >= 3 ? "~" : "✗");
 // ---- generate -------------------------------------------------------------------------------------
 const outDir = join(kit, "assets", "backgrounds");
 mkdirSync(outDir, { recursive: true });
+// Candidates are disposable: the folder ignores itself. Only .gitignore and a hand-kept log.md are tracked.
+const gi = join(outDir, ".gitignore");
+if (!existsSync(gi)) writeFileSync(gi, "# generated candidates are not committed; keep log.md for chosen ones\n*\n!.gitignore\n!log.md\n");
+const prefix = edit ? `${name}-edit` : name;
 let start = 1;
-while (["jpg", "png"].some((e) => existsSync(join(outDir, `${name}-${start}.${e}`)))) start++;
+while (["jpg", "png"].some((e) => existsSync(join(outDir, `${prefix}-${start}.${e}`)))) start++;
+const imgItem = (f) => ({ type: "image", mime_type: /\.png$/i.test(f) ? "image/png" : "image/jpeg", data: readFileSync(f).toString("base64") });
+const inputs = [{ type: "text", text: fullPrompt }, ...[edit, ...refs].filter(Boolean).map(imgItem)];
 
 for (let i = start; i < start + n; i++) {
   const res = await fetch(ENDPOINT, {
@@ -112,7 +128,7 @@ for (let i = start; i < start + n; i++) {
     headers: { "x-goog-api-key": key, "Content-Type": "application/json", "Api-Revision": "2026-05-20" },
     body: JSON.stringify({
       model: MODEL,
-      input: [{ type: "text", text: fullPrompt }],
+      input: inputs,
       response_format: { type: "image", mime_type: "image/jpeg", aspect_ratio: ratio, image_size: size },
     }),
   });
@@ -122,11 +138,11 @@ for (let i = start; i < start + n; i++) {
   if (!img) { console.error(`#${i} no image found in response:`, JSON.stringify(json).slice(0, 300)); process.exit(1); }
 
   const buf = Buffer.from(img.data, "base64");
-  const file = join(outDir, `${name}-${i}.${img.mime.includes("png") ? "png" : "jpg"}`);
+  const file = join(outDir, `${prefix}-${i}.${img.mime.includes("png") ? "png" : "jpg"}`);
   writeFileSync(file, buf);
   const grid = await contrastGrid(buf);
   writeFileSync(file.replace(/\.\w+$/, ".json"), JSON.stringify({
-    model: MODEL, ratio, size, textZone: zone, idea, prompt: fullPrompt, date: new Date().toISOString(),
+    model: MODEL, ratio, size, textZone: zone, idea, editOf: edit ?? null, refs, prompt: fullPrompt, date: new Date().toISOString(),
     textColor: text, contrastGrid3x3: grid, note: "Contrast of the text colour vs the brightest 10% of each cell; ✓ ≥ 4.5, ~ ≥ 3, ✗ < 3.",
   }, null, 2));
 

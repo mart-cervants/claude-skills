@@ -25,9 +25,25 @@ node <skills>/social-visuals/scripts/gen_background.mjs --kit marketing/social \
   `visual-identity.md` into the idea yourself.
 - `--text-zone` asks the model to keep that area calm and dark for the headline.
 - `--dry` prints the final prompt and estimated cost without calling the API. Always dry-run first.
+- `--edit <image>`: `--prompt` becomes a change instruction ("darken the left third"); output is
+  `<name>-edit-<i>`. Good for small tweaks. **Not reliable for big style changes** (the same instruction kept
+  the old style in one run and worked in another).
+- `--ref <image>` (repeatable): use an image as a composition/palette guide for a **fresh** generation.
+  Better than `--edit` when the style must change; expect faint leftovers of the reference.
 - Output: `<kit>/assets/backgrounds/<name>-<i>.jpg` and a sidecar `.json` (prompt, model, date,
-  contrast grid). Files are numbered, never overwritten.
+  contrast grid). Files are numbered, never overwritten. The folder writes its own `.gitignore`
+  (`*`, except `.gitignore` and `log.md`): candidates are never committed; keep a hand-written
+  `log.md` (chosen file, prompt, model, date, where used).
 - Then upload the pick in the card editor as the card background and dim/scrim as needed.
+
+## Using the pick on a card
+
+Set the card's `bg` to a kit-relative path the editor serves (`assets/uploads/<file>`) or an `https` URL
+(e.g. R2). Set `"net": 0` so the template's decorative node network doesn't draw over the art. `dim`
+controls the left-to-right scrim. Note: a remote `bg` can fail behind a corporate web proxy that
+redirects or blocks the request; the renderer now fails the card with "background image failed to
+load" instead of silently rendering without it. Don't bypass the proxy; render from a personal network
+or use a local file.
 
 ## Contrast report
 
