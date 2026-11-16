@@ -1,6 +1,6 @@
 ---
 name: social-visuals
-description: Use when the user needs an image or visual for a social media post, cover, carousel, Reel card sequence or ad for any brand. Renders on-brand HTML templates with Playwright using the brand kit's tokens, logo and fonts, so text and logo are always exact; uses AI image models (e.g. the Higgsfield MCP) only for text-free background art, then composites. Network-agnostic — used by facebook-page-content and other posting skills.
+description: Use when the user needs an image or visual for a social media post, cover, carousel, Reel card sequence or ad for any brand. Renders on-brand HTML templates with Playwright using the brand kit's tokens, logo and fonts, so text and logo are always exact; uses AI image models (the Gemini API script, or an image MCP such as Higgsfield) only for text-free background art, then composites. Network-agnostic — used by facebook-page-content and other posting skills.
 ---
 
 # Social Visuals
@@ -34,7 +34,8 @@ the user for them or use the defaults in `tokens.json` and say so.
 | File | Read when |
 |---|---|
 | `reference/visual-principles.md` | Always, before designing (generic craft rules) |
-| `reference/higgsfield.md` | Using AI artwork |
+| `reference/higgsfield.md` | Using AI artwork through an image MCP |
+| `reference/gemini.md` + `scripts/gen_background.mjs` | Using AI artwork through the Gemini API (key only; 3 candidates with a text-contrast report) |
 | `templates/post-card.html` | The default card template (square / portrait / Reel frame) |
 | `scripts/serve_editor.mjs` + `templates/editor.html` | Local review/edit canvas: live preview, drag/resize/snap, layers, fit warnings, approve, save, render |
 | `scripts/render_cards.mjs` | Batch rendering with safety checks (see `SETUP.md`) |
@@ -54,7 +55,7 @@ the user for them or use the defaults in `tokens.json` and say so.
    fonts) and a negative list. Existing series skip this step.
 4. **Choose method.** Typographic card by default. Use AI artwork only if it adds
    value, as a text-free full-bleed background; check the cost first (see
-   `reference/higgsfield.md`). Don't composite cut-out product images or complex
+   `reference/gemini.md` or `reference/higgsfield.md`). Don't composite cut-out product images or complex
    photos: stay with text, layout and vector shapes.
 5. **Write the card data** (`<kit>/calendar/YYYY-MM.cards.json`, see `SETUP.md`): one
    entry per card with `id`, `kicker`, `title` (wrap the highlight in `[brackets]`),
@@ -72,6 +73,14 @@ the user for them or use the defaults in `tokens.json` and say so.
    `layout` offsets in the cards file, so the PNG always matches the preview.
    Wait for their approval. If they ask for layout/style changes (not just wording),
    edit `templates/post-card.html` and tell them to refresh.
+   **MANDATORY GATE — never skip it, not even for a "small" change.** Every time a card's
+   look changes (text, layout, background image, dim, a re-render of an already approved
+   card, replacing the image of an existing Metricool draft), set its `status` back to
+   `draft`, start the editor, give the user the link, and wait. Proceed only when the
+   saved cards file says `"status": "approved"` for that card (read the file; the user
+   saying "approved" is not enough if it isn't saved). Rendering previews for your own
+   checks goes to a scratch folder, never to the kit's `designs/`. Render to `designs/`,
+   upload and update drafts only after this gate, and use `--approved-only`.
 7. **Longest-copy test.** Before a template joins a series, render it with the longest
    realistic headline and support line, not just the example text.
 8. **Render approved cards** with `scripts/render_cards.mjs --approved-only` (or the
@@ -83,7 +92,9 @@ the user for them or use the defaults in `tokens.json` and say so.
    ~400 px wide, spacing, accents and spelling. Fix everything found in one batch,
    check once more, then stop polishing.
 10. **Deliver.** Give the user the file paths. Upload only approved images to the
-   brand's media host (see `SETUP.md` and the kit's `publishing.md`).
+   brand's media host (see `SETUP.md` and the kit's `publishing.md`). Renders, uploads and
+   cards JSON are local working files: **don't commit them** (the kit's `.gitignore` covers it;
+   if it doesn't, add `templates/kit.gitignore` from `social-brand-kit` first).
 
 ## Do not
 
@@ -93,6 +104,7 @@ the user for them or use the defaults in `tokens.json` and say so.
 - Ship a visual with a typo — fix the text in the card data and re-render; never regenerate with AI.
 - Skip the overflow checks or edit the PNG by hand to hide a text overflow; shorten the copy.
 - Render, upload or schedule cards the user hasn't reviewed and approved in the editor.
+- Skip the editor review because the change "is only a background swap" or "was already approved before"; any visual change needs a fresh review.
 - Upload images the brand doesn't have the rights to, or real client, employer or personal photos.
 - Copy another creator's visual; take structure/style cues from `inspiration/`
   and make the content and layout your own.

@@ -46,8 +46,9 @@ Read `reference/kit-structure.md` for the folder layout and what each file is fo
    said (confidentiality, claims, legal), CTA and links, posting channels.
 4. **Create the kit** from `templates/` (copy each template, fill from the
    confirmed answers, leave clearly marked `TODO` where information is missing).
-   Add the `Social brand kit:` line to the project's `CLAUDE.md` (ask first if
-   that file is committed and shared).
+   Copy `templates/kit.gitignore` to `<kit>/.gitignore` (merge with an existing one):
+   per-post files (calendar, renders, uploads) stay local. Add the `Social brand kit:`
+   line to the project's `CLAUDE.md` (ask first if that file is committed and shared).
 5. **Visual identity.** Ask for the logo, brand colors and fonts (or extract
    them from the website CSS/images, and confirm). Fill `tokens.json`.
 6. **Inspiration.** Explain the `inspiration/` folder (posts the user likes and

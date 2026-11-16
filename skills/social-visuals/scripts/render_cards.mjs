@@ -95,6 +95,7 @@ for (const card of cards) {
     await page.goto(`${base}/.render/post-card.html?${params}`, { waitUntil: 'load' });
     await page.waitForFunction(() => document.documentElement.dataset.ready === '1', null, { timeout: 15000 });
     const info = await page.evaluate(() => ({ ...document.documentElement.dataset }));
+    if (info.bgfail === '1') problems.push('background image failed to load: ' + card.bg);
     if (info.overflow === '1') problems.push('text overflow: ' + (info.overflowReason || 'does not fit'));
     await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
     const buf = await page.locator('#stage').screenshot({ type: 'png', animations: 'disabled' });

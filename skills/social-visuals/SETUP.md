@@ -40,7 +40,8 @@ Images and backgrounds:
 - Images are re-encoded in the browser before upload: scaled down to at most 2400 px, PNG/WebP/GIF stay PNG
   (transparency kept), everything else becomes JPEG. This also **strips EXIF metadata such as GPS location**.
 - Files are saved under `<kit>/assets/uploads/` (PNG/JPEG only; identical files are reused, never duplicated).
-  They are committed with the kit unless you gitignore that folder. Only upload images you have the rights
+  This folder, `designs/<month>/` and `calendar/*.cards.json` are **local working files and are not committed**
+  (see the kit's `.gitignore`); finished images live on the media host. Only upload images you have the rights
   to use, and no real client, employer or personal photos (see `guardrails.md`).
 - When elements overlap, click the same spot again to select the one underneath, or pick it in the
   Elements list. A selected element can be dragged even when another element covers it.

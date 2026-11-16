@@ -1,0 +1,17 @@
+# Social brand kit — what NOT to commit.
+# Rule: commit only STABLE brand files (voice, guardrails, tokens, logo, fonts, identity docs).
+# Anything that changes with every post stays local, otherwise every post means a commit/PR/merge.
+# After scheduling, the source of truth is the scheduler (text, date) and the media host (image).
+
+# Other creators' content (reference only) — private
+inspiration/*
+!inspiration/README.md
+!inspiration/notes.md
+
+# Per-post working files and generated output — recreate with the skills
+calendar/*
+!calendar/README.md
+designs/*/
+assets/uploads/*
+assets/backgrounds/
+.render/
