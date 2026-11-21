@@ -10,10 +10,11 @@ real ones.
 Not to make money yet.
 
 **Design**
-- **≥3 angles** when the budget allows; fewer is fine if stated up front (2 angles
-  is a duel, not a ranking). Angles must differ in *message* (pain, proof/result,
-  objection, offer…), not in color or crop. Take them from sourced ideas
-  (`content-ideas`).
+- **Number of angles = what the budget supports** (`budget-and-structure.md`; ask the budget
+  first). Three or more only when budget and sourced angles allow it; 2 angles is a
+  duel, not a ranking, and 1 is a calibration. Angles must differ in *message* (pain,
+  proof/result, objection, offer…), not in color or crop. Take them from sourced
+  ideas (`content-ideas`).
 - **One variable.** Same format, same offer, same destination, same audience; only
   the angle changes.
 - **One ad set per angle, equal daily budgets.** Putting several ads in one ad
