@@ -46,6 +46,30 @@ privacy and reliability are unverified). Never copy text, structure-by-structure
 or creative. Record: topic, format, why it seems to work — or send the best
 ones through Mode C (`inspiration-analysis.md`).
 
+## 4b. Meta Ad Library (competitor and adjacent ads; angles and offers, not content)
+
+Public and official: https://www.facebook.com/ads/library (no account needed to
+browse; the Meta Ads MCP's library search works for viewers with an active ad
+account). Use it for **ideas about angles, hooks, offers and formats** — also the
+input of `meta-campaigns`.
+
+- Write one research question first ("how do others in my market open a message
+  about X?"), then search by keyword and by Page, country = the brand's market.
+- Keep it small: a handful of targeted queries, read-only; no bulk extraction,
+  no third-party ad-spy tools, no logins bypassed.
+- It does **not** show spend, impressions or results for ordinary ads. Use
+  indirect signals and say they are heuristics: how long an ad has been active
+  (long-running ads suggest the advertiser keeps paying for them), repeated
+  variants of the same message (they are testing it), recurring hooks, formats
+  and calls to action. Treat "active for 60+ days" style thresholds from vendor
+  blogs as rough; the Library alone can't prove performance.
+- Read the full ad (text, format, CTA, start date) before logging it; search
+  results show only titles. Log: Library ID, Page, start date, hook, format,
+  offer, CTA, variants seen.
+- Originality rule applies: take the **pattern**, rebuild it with the brand's
+  own information, never copy text or creative. Mark ideas `needs validation`.
+- Valid as source in the backlog: "inspiration — Ad Library <ID>".
+
 ## 5. Real conversations (best source; see `interview-guide.md`)
 
 2–3 short conversations with real customers beat any tool.

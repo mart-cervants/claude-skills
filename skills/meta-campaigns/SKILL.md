@@ -98,7 +98,8 @@ with the user before anything else.
    remarketing. Default for a first campaign is a test. Don't scale without a
    finished test; don't remarket without enough audience.
 5. **Angles and creatives.** Angles come from `content-ideas` (sourced), not
-   invention; copy in the brand voice through the anti-slop gate
+   invention (its Mode B includes the Meta Ad Library for competitor angles,
+   offers and formats); copy in the brand voice through the anti-slop gate
    (`social-brand-kit`); visuals via `social-visuals` with its mandatory editor
    review. One variable per ad: change the angle, keep format and offer.
 6. **Build the plan.** Write the structure (campaign → ad sets → ads), budgets,
