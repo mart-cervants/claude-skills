@@ -15,6 +15,12 @@ table below and explain the result to the user in plain words.
    cheap calibration round. Never invent it silently.
 4. How many different angles they actually have, with a source each
    (`content-ideas`). Fewer real angles than the budget allows → run fewer.
+   A source can be competitor ads (Meta Ad Library), search demand, or the
+   user's own experience. Customer conversations are the **best** source but
+   **optional**: a user with no customers or conversations yet can still run a
+   small test, because the test itself is the validation. Don't block the plan
+   on interviews; say instead that results are directional and record what is
+   learned.
 
 ## What Meta says (help center, checked 2026-11-20)
 
