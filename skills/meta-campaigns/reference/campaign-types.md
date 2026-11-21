@@ -21,7 +21,10 @@ Not to make money yet.
   ~99.5% of impressions and the test produced nothing). Alternative for very
   small budgets: **sequential** — one angle at a time, same weekdays; weaker
   because time effects mix with angle effects, so say so in the results.
-- **How many angles fit:** `angles = floor(test_budget / (daily_budget_per_ad_set × days))`.
+- **How many angles fit:** decided by the budget, see `budget-and-structure.md`
+  (ask the budget first). A quick arithmetic bound is
+  `floor(test_budget / (daily_budget_per_ad_set × days))`, but it is only the
+  ceiling; the table there is what to follow.
   Meta enforces a minimum budget that varies by country, objective and
   optimization, and shows an alert/recommendation in Ads Manager; read it there,
   don't assume. With a *cost per result goal* strategy, Meta says the daily

@@ -11,7 +11,7 @@ numbers as data arrives. Keep this file free of secrets (no tokens).
 - Ad account name: <...>
 - Currency / time zone: <MXN> / <IANA>
 - Page: <name>   Instagram: <handle or none>
-- Business verification: <pending | done>
+- Business verification: <not started | started | done> (optional unless Meta or a feature requires it)
 - Payment method and spending limit set: <yes/no>
 
 ## Goal

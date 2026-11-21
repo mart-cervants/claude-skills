@@ -34,7 +34,7 @@ with the user before anything else.
    else `marketing/social/`). Read `guardrails.md` first (identity,
    confidentiality, claims), then `brand-profile.md` and `voice.md`.
 2. Locate `ads.md` (same folder as the kit by default). Missing or incomplete →
-   build it (workflow step 1). Incomplete = any of: declared ad account,
+   build it (workflow step 2). Incomplete = any of: declared ad account,
    conversion event, budget cap, economics, decision rules.
 3. Read-only work (planning, reviewing numbers) needs no MCP. Operating needs the
    Meta Ads MCP (`SETUP.md`). Check which tools the session actually exposes;
@@ -45,6 +45,7 @@ with the user before anything else.
 | File | Read when |
 |---|---|
 | `reference/ads-template.md` | Creating or completing the project's `ads.md` |
+| `reference/budget-and-structure.md` | First: turning the user's budget into how many ad sets/angles to run |
 | `reference/campaign-types.md` | Designing a test, scale or remarketing campaign |
 | `reference/metrics-and-thresholds.md` | Choosing the objective, computing targets, deciding on results |
 | `reference/ui-and-delivery-gotchas.md` | Building in Ads Manager or via MCP; before any launch |
@@ -76,39 +77,46 @@ with the user before anything else.
 
 ## Workflow
 
-1. **Frame (`ads.md`).** With the user, fill `reference/ads-template.md`: goal and
-   single conversion event, ad account, total test budget and daily cap, offer
+1. **Budget first (`reference/budget-and-structure.md`).** Before proposing any
+   structure, ask the user for the spending cap (total and per month), the
+   window, the expected cost per result (or mark it an assumption) and the
+   real, sourced angles available. Compute how many ad sets the budget
+   supports and tell the user the result and the reason, with the alternatives
+   that would change it (more budget, longer window, cheaper event). The user
+   decides; never assume "3 angles".
+2. **Frame (`ads.md`).** With the user, fill `reference/ads-template.md`: goal and
+   single conversion event, ad account, the budget decision from step 1, offer
    and landing/destination, economics (ticket, margin, close rate, LTV) with
    assumptions marked, audiences, and the decision rules. Compute break-even
    and target numbers (`reference/metrics-and-thresholds.md`). Show and get OK.
-2. **Readiness check.** Account verified and in the right currency; Page linked;
+3. **Readiness check.** Account active and in the right currency; Page linked;
    destination works (WhatsApp link/booking opens on a phone); tracking in
    place for the chosen event, or the plan uses an objective that doesn't need it
    (see "Objective selection"); payment method and spending limit set. List gaps
    as tasks; do not launch with gaps that make the result unreadable.
-3. **Pick the campaign type** (`reference/campaign-types.md`): test, scale or
+4. **Pick the campaign type** (`reference/campaign-types.md`): test, scale or
    remarketing. Default for a first campaign is a test. Don't scale without a
    finished test; don't remarket without enough audience.
-4. **Angles and creatives.** Angles come from `content-ideas` (sourced), not
+5. **Angles and creatives.** Angles come from `content-ideas` (sourced), not
    invention; copy in the brand voice through the anti-slop gate
    (`social-brand-kit`); visuals via `social-visuals` with its mandatory editor
    review. One variable per ad: change the angle, keep format and offer.
-5. **Build the plan.** Write the structure (campaign → ad sets → ads), budgets,
+6. **Build the plan.** Write the structure (campaign → ad sets → ads), budgets,
    dates, tracking tags (UTM), and the decision table: metric, minimum data,
    thresholds, action. Save into `ads.md` (or a dated campaign section).
    Show it; wait for approval.
-6. **Create (MCP or Ads Manager).** Account check, then create everything
+7. **Create (MCP or Ads Manager).** Account check, then create everything
    **paused** with the dry-run/approval gate. Re-read what was created and
    compare with the plan field by field (country, budget, optimization goal,
    placements, audience, start/end dates, tracking). Fix differences before
    activating. Hidden defaults are the usual culprit (`reference/ui-and-delivery-gotchas.md`).
-7. **Launch** only on explicit user OK. Record ids and the start date in `ads.md`.
-8. **Review on schedule, not on impulse.** Do not judge before the minimum data
+8. **Launch** only on explicit user OK. Record ids and the start date in `ads.md`.
+9. **Review on schedule, not on impulse.** Do not judge before the minimum data
    in the plan is met. At the review: pull the numbers, check delivery
    distribution first (did every ad set/ad get its share?), then the decision
    table. Outcome is one of: continue, stop, scale, retest, **inconclusive**.
    Cross-check with your own analytics (UTM) and the step after the click.
-9. **Close the loop.** Append results (what ran, spend, numbers, decision, why)
+10. **Close the loop.** Append results (what ran, spend, numbers, decision, why)
    to the kit's `results.md`; feed learnings to `content-ideas`. Update `ads.md`
    assumptions with real numbers.
 

@@ -62,7 +62,7 @@ modal pre-selecting "keep current settings"; read before confirming.
   confirm interest names when a label looks wrong.
 - Some brands/tools have no matching interest; use job titles, behaviors or
   lookalikes instead of forcing a poor match.
-- A Page is required to run ads; business verification and the account currency
+- A Page is required to run ads; the account currency and time zone
   are hard to change later — decide them first.
 - Don't use another business's ad account, Page, pixel or creatives.
 

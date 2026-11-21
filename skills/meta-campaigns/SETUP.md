@@ -47,7 +47,7 @@ Business Manager / token permissions), not just in prompts.
 ## 3. Prerequisites for a new brand (Meta side)
 
 - Business Manager / business account, ad account in the right currency, Page linked.
-- Business verification started early (it can take days).
+- Business verification is **optional to start**: Meta requires it for some features (e.g. higher spending limits, certain APIs, regulated categories) and can ask for it automatically. It needs business documents and can take up to ~14 business days. Don't make it a prerequisite for a small test; do it when Meta asks or a feature needs it. A paused or restricted account is the risk of not having it.
 - Payment method and a spending limit.
 - Tracking for the chosen event (pixel and/or Conversions API); consent behavior
   decided. Not needed for messaging objectives.
