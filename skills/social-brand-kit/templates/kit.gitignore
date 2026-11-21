@@ -15,3 +15,9 @@ designs/*/
 assets/uploads/*
 assets/backgrounds/
 .render/
+
+# Files edited constantly (running idea list, monthly results): keep local, back up by hand.
+# Safety copies for restoring after a branch switch that deletes/overwrites them.
+idea-backlog.md
+results.md
+.local-backup/
