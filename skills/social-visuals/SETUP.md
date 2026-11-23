@@ -16,6 +16,9 @@ node <this-skill>/scripts/serve_editor.mjs --kit <brand kit dir> --cards calenda
 # open the printed URL: http://127.0.0.1:8790/.render/editor.html?cards=calendar/2026-11.cards.json
 ```
 
+The header has **Approve all** and **Save + Render all** (renders only approved cards). With several tabs open, the last save wins:
+use one tab, and stop the server before editing the cards file by hand.
+
 The editor shows each card live (the exact HTML that becomes the PNG), lets you edit
 kicker, headline, support line, CTA, alt text, size and status (draft/approved), warns
 about overflow, saves to the cards file, and renders a PNG on demand.

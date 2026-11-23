@@ -3,7 +3,7 @@
 //
 //   node gen_background.mjs --kit marketing/social --name p1-lanzamiento \
 //     --prompt "abstract network graph converging into one glowing node" \
-//     [--text-zone left|right|top|bottom|center|none] [--ratio 4:5] [--size 1K] [--n 3] [--dry]
+//     [--text-zone left|right|top|bottom|center|none] [--ratio 4:5] [--size 1K] [--n 1] [--dry]
 //     [--edit <image>]   edit that image: --prompt is then the change instruction (composition is kept)
 //     [--ref <image>]    use an image as a composition/palette guide for a fresh generation (repeatable)
 //
@@ -32,14 +32,14 @@ const idea = flag("prompt");
 const zone = flag("text-zone", "none");
 const ratio = flag("ratio", "1:1");
 const size = flag("size", "1K");
-const n = Math.max(1, Math.min(Number(flag("n", "3")), 6));
+const n = Math.max(1, Math.min(Number(flag("n", "1")), 6)); // 1 by default to save money; raise only when exploring
 const dry = bool("dry");
 const edit = flag("edit");
 const refs = [];
 for (let i; (i = argv.indexOf("--ref")) >= 0; ) refs.push(argv.splice(i, 2)[1]);
 for (const f of [edit, ...refs].filter(Boolean)) if (!existsSync(f)) { console.error(`Image not found: ${f}`); process.exit(1); }
 if (!name || !idea || !ZONES.includes(zone) || !PRICE[size]) {
-  console.error(`Usage: gen_background.mjs --kit <dir> --name <id> --prompt "<idea>" [--text-zone ${ZONES.join("|")}] [--ratio 1:1] [--size 1K|2K|4K] [--n 3] [--dry]`);
+  console.error(`Usage: gen_background.mjs --kit <dir> --name <id> --prompt "<idea>" [--text-zone ${ZONES.join("|")}] [--ratio 1:1] [--size 1K|2K|4K] [--n 1] [--dry]`);
   process.exit(1);
 }
 

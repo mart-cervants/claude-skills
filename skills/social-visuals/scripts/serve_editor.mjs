@@ -164,6 +164,23 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (p === '/api/render-all' && req.method === 'POST') {
+      // Renders every card whose saved status is "approved" (never drafts), like render_cards.mjs --approved-only.
+      const rel = url.searchParams.get('file');
+      const file = cardsPath(rel);
+      if (!file || !fs.existsSync(file)) return send(res, 400, { error: 'invalid request' });
+      const out = outDirFor(rel);
+      const child = spawn(process.execPath, [path.join(here, 'render_cards.mjs'), '--kit', kit, '--cards', file, '--out', path.join(kit, out), '--approved-only'],
+        { cwd: here });
+      let log = ''; child.stdout.on('data', d => log += d); child.stderr.on('data', d => log += d);
+      child.on('close', code => {
+        let pngs = [];
+        try { pngs = (JSON.parse(fs.readFileSync(path.join(kit, out, 'manifest.json'), 'utf8')).rendered || []).map(r => ({ id: r.id, png: `/${out.split(path.sep).join('/')}/${r.file}?t=${Date.now()}` })); } catch (e) {}
+        send(res, 200, { ok: code === 0, output: log.trim(), pngs });
+      });
+      return;
+    }
+
     // static files from the kit root
     const target = path.normalize(path.join(kit, decodeURIComponent(p)));
     if (!target.startsWith(kit) || !fs.existsSync(target) || fs.statSync(target).isDirectory()) return send(res, 404, 'not found', 'text/plain');
