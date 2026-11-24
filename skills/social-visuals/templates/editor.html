@@ -82,6 +82,8 @@ a{color:var(--accent)}
   <span class="spacer"></span>
   <label style="margin:0"><input type="checkbox" id="snapOn" checked> snap</label>
   <label style="margin:0"><input type="checkbox" id="debug"> show margins</label>
+  <button id="approveAll" title="Marks every card approved and saves. Only after reviewing each one.">Approve all</button>
+  <button id="renderAll" title="Saves, then renders every approved card to designs/">Save + Render all</button>
   <button id="save" class="primary">Save</button>
 </header>
 <main>
@@ -464,6 +466,22 @@ $('render').onclick = async () => {
   $('render').disabled = false; const box = $('result'); box.innerHTML = '';
   const pre = document.createElement('pre'); pre.textContent = r.output || r.error || ''; box.appendChild(pre);
   if (r.png) { const a = document.createElement('a'); a.href = r.png; a.target = '_blank'; a.textContent = 'Open PNG'; box.appendChild(a); const im = document.createElement('img'); im.src = r.png; box.appendChild(im); }
+};
+$('approveAll').onclick = async () => {
+  commit(); const n = data.cards.length; if (!n) return;
+  if (!window.confirm('Mark all ' + n + ' cards as approved and save? Do this only after reviewing each card.')) return;
+  data.cards.forEach(c => { c.status = 'approved'; }); $('f-status').value = 'approved'; setDirty(true); renderList();
+  if (await save()) { $('approveAll').textContent = n + ' approved + saved ✓'; setTimeout(() => $('approveAll').textContent = 'Approve all', 2500); }
+};
+$('renderAll').onclick = async () => {
+  if (!(await save())) return; const box = $('result'); box.innerHTML = '';
+  const approved = data.cards.filter(c => c.status === 'approved').length;
+  if (!approved) { box.textContent = 'No approved cards to render. Set status to approved (or use Approve all) first.'; return; }
+  $('renderAll').disabled = true; box.textContent = 'Rendering ' + approved + ' approved card(s)…';
+  const r = await api('/api/render-all?file=' + encodeURIComponent(file), { method: 'POST' });
+  $('renderAll').disabled = false; box.innerHTML = '';
+  const pre = document.createElement('pre'); pre.textContent = r.output || r.error || ''; box.appendChild(pre);
+  (r.pngs || []).forEach(x => { const a = document.createElement('a'); a.href = x.png; a.target = '_blank'; a.textContent = x.id + '.png'; a.style.display = 'block'; box.appendChild(a); });
 };
 $('add').onclick = () => {
   commit(); let n = data.cards.length + 1, id; do { id = 'card-' + String(n++).padStart(2, '0'); } while (data.cards.some(c => c.id === id));

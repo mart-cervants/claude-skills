@@ -35,7 +35,7 @@ the user for them or use the defaults in `tokens.json` and say so.
 |---|---|
 | `reference/visual-principles.md` | Always, before designing (generic craft rules) |
 | `reference/higgsfield.md` | Using AI artwork through an image MCP |
-| `reference/gemini.md` + `scripts/gen_background.mjs` | Using AI artwork through the Gemini API (key only; 3 candidates with a text-contrast report) |
+| `reference/gemini.md` + `scripts/gen_background.mjs` | Using AI artwork through the Gemini API (key only; 1 candidate by default, with a text-contrast report) |
 | `templates/post-card.html` | The default card template (square / portrait / Reel frame) |
 | `scripts/serve_editor.mjs` + `templates/editor.html` | Local review/edit canvas: live preview, drag/resize/snap, layers, fit warnings, approve, save, render |
 | `scripts/render_cards.mjs` | Batch rendering with safety checks (see `SETUP.md`) |
@@ -54,7 +54,9 @@ the user for them or use the defaults in `tokens.json` and say so.
    (c) only then build or adapt the template, with explicit tokens (hex colors, exact
    fonts) and a negative list. Existing series skip this step.
 4. **Choose method.** Typographic card by default. Use AI artwork only if it adds
-   value, as a text-free full-bleed background; check the cost first (see
+   value: a text-free background or, when the owner wants the card to *show* its topic, a
+   text-free representative illustration in one consistent series (see "Series of representative
+   illustrations" in `reference/gemini.md`); check the cost first (see
    `reference/gemini.md` or `reference/higgsfield.md`). Don't composite cut-out product images or complex
    photos: stay with text, layout and vector shapes.
 5. **Write the card data** (`<kit>/calendar/YYYY-MM.cards.json`, see `SETUP.md`): one
@@ -71,6 +73,12 @@ the user for them or use the defaults in `tokens.json` and say so.
    the card — a dimmable background image, undo/redo), sees fit/overflow
    warnings, sets `status` to `approved`, and saves. Moves are stored per card as
    `layout` offsets in the cards file, so the PNG always matches the preview.
+   The editor header has **Approve all** (marks every card approved and saves at once, with a confirmation) and
+   **Save + Render all** (saves, then renders every approved card to `designs/`); use them only after the user has
+   reviewed the cards.
+   **Never edit the cards file while the editor is open, and keep a single editor tab:** a tab holding an old copy
+   overwrites the file when it saves. To change the file from outside, stop the editor server, edit, restart it and
+   open one fresh tab. Read the saved file to confirm `approved` before rendering or uploading.
    Wait for their approval. If they ask for layout/style changes (not just wording),
    edit `templates/post-card.html` and tell them to refresh.
    **MANDATORY GATE — never skip it, not even for a "small" change.** Every time a card's
@@ -99,6 +107,7 @@ the user for them or use the defaults in `tokens.json` and say so.
 ## Do not
 
 - Generate or edit the logo with an AI model; always use the kit's logo file.
+- Draw third-party logos (WhatsApp, Excel, etc.) with an AI model; composite the official file with the template.
 - Put real client/third-party data or real screenshots in visuals; demo data only.
 - Use stock clichés (handshakes, laptops with glowing charts, rockets, robots).
 - Ship a visual with a typo — fix the text in the card data and re-render; never regenerate with AI.

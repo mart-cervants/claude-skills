@@ -15,6 +15,8 @@ Or, for local development without publishing anywhere, symlink individual skills
 ln -s "$(pwd)/skills/<skill-name>" ~/.claude/skills/<skill-name>
 ```
 
+**Every new skill needs its own symlink** (or a plugin install); a skill added to this repo is invisible to Claude Code until then.
+
 ## Skills
 
 | Skill | What it does |
