@@ -23,6 +23,16 @@ Rules: TODO (e.g. one accent, dark/light background, forbidden colors).
 ## Motifs and layout
 - TODO — grid, shapes, illustration style, logo placement and safe margins.
 
+## Illustration series (optional)
+Fill this in when cards should *show* their topic with text-free AI artwork (`social-visuals`, `reference/gemini.md`).
+- **Style sentence** (goes into the prompt): TODO — e.g. flat vs. line art, stroke weight, glow, background.
+- **Anchor image:** TODO — path of the first approved card/illustration; every next one uses it as `--ref`.
+- **Subject position:** TODO — e.g. subject in the right 40% so the headline stays free.
+- **Subjects that fit the brand's industry:** TODO — concrete, recognizable objects.
+- **Not allowed:** TODO — stock clichés, fake data that looks real, people, text inside the art.
+- **Third-party logos:** TODO — allowed or not; if allowed, composite the official file, never AI-drawn.
+- **Candidates per image:** 1 by default (money); more only to explore a style.
+
 ## Sizes
 | Use | Size (px) | Notes |
 |---|---|---|

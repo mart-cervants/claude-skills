@@ -56,10 +56,10 @@ Tools exposed by the Metricool MCP: `getBrandSettings`, `getScheduledPosts`,
   (Reels need a video; Stories need image or video). Always include
   `facebookData` for Facebook posts.
 - **Time zone:** use the brand's IANA zone from `getBrandSettings`
-  (DataNode's brand is `America/Monterrey`, same offset as Mexico City).
+  (e.g. `America/Monterrey` for a brand in Mexico; read it from the tool, don't assume).
 - **Best times** (`getBestTimeToPostByNetwork`, network `facebook`) returned data
   on a brand with no posts yet, so treat it as a general benchmark until the Page
-  has its own history. In the first check it peaked around 10:00 and 12:00 on weekdays.
+  has its own history. In one first check on a brand with no posts it peaked around 10:00 and 12:00 on weekdays (a generic benchmark, not a rule).
 
 ## 6. Confirmed by the first test draft (2026-11-11, Free plan)
 
