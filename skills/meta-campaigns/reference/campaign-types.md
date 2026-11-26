@@ -19,7 +19,7 @@ Not to make money yet.
   the angle changes.
 - **One ad set per angle, equal daily budgets.** Putting several ads in one ad
   set lets delivery pile onto an early leader (a known failure: one ad took
-  ~99.5% of impressions and the test produced nothing). Alternative for very
+  nearly all impressions and the test produced nothing). Alternative for very
   small budgets: **sequential** — one angle at a time, same weekdays; weaker
   because time effects mix with angle effects, so say so in the results.
 - **How many angles fit:** decided by the budget, see `budget-and-structure.md`

@@ -73,34 +73,37 @@ zone is `✓`. This is a pre-selection aid; the rendered card is still the final
 Same as `higgsfield.md`: text-free only, composite text and logo with the template, 1 candidate by default (2–3 only to explore a style),
 no people unless the kit's `guardrails.md` allows them, log what you keep in `inspiration/notes.md`.
 
-## Series of representative illustrations (workflow used for the December 2026 cards)
+## Series of representative illustrations (any brand)
 
-Use it when the owner wants each card to *show* its topic (a spreadsheet, a chat, shelves, a cloud) instead of an abstract
+Use it when the owner wants each card to *show* its topic (a document, a chat, shelves, a map...) instead of an abstract
 background. It is still text-free artwork: the template puts the text and logo on top.
+
+**The look belongs to the brand, not to this skill.** Read it from the kit: the "Illustration series" section of
+`visual-identity.md` (style sentence, anchor image, allowed and forbidden subjects, logo policy) and the series table in
+`inspiration/notes.md`. If the kit has none yet, propose one with the user (steps 1–2 below), then **write it into the kit** so
+the next batch, another machine or another session reuses it. Colours already come from `tokens.json`.
 
 1. **Concept list first (no cost).** One line per card: the concrete subject and why it explains the topic. The user approves
    or changes the list before anything is generated.
-2. **First card = style anchor.** Generate it (`--n 2` or `3` if the look isn't set yet), pick one, approve it in the editor.
-3. **Every next card uses that image as reference:** `--ref <anchor.jpg>` plus the sentence "same visual style as the reference
-   image". This kept dozens of images in one consistent series. Use `--n 1` for the rest.
-4. **Prompt recipe that worked** (the script appends colours, "no text/logos/people" and the calm text zone):
-   - Style: "Flat vector illustration with thin cyan outlines and subtle glow on a very dark navy background, same visual style
-     as the reference image."
+2. **First card = style anchor.** Generate it (`--n 2` or `3` while the look isn't set), pick one, approve it in the editor and
+   store the file in the kit as the series anchor (a stable brand asset, not a throwaway candidate).
+3. **Every next card uses the anchor as reference:** `--ref <anchor>` plus the sentence "same visual style as the reference
+   image". This keeps dozens of images in one consistent series. Use `--n 1` for the rest.
+4. **Prompt recipe** (the script appends the palette from `tokens.json`, "no text/logos/people" and the calm text zone):
+   - Style: the kit's style sentence (flat vs. isometric vs. line art, stroke, glow, background), ending with "same visual
+     style as the reference image".
    - Position: "The subject sits in the right 40 percent of the frame, vertically centered, clearly visible and not too small."
      Without it, subjects sprawl under the headline and get muted by the scrim; with `--text-zone left` the headline stays free.
    - Blank shapes: "Shapes are blank: no numbers, no letters, no brand logos, no people."
    - One sentence "Subject: ..." that names the concrete objects and their arrangement.
-5. **Subjects that explain without clichés** (topic → subject): late reports → report pages with blank grids + a clock;
-   chat automation → phone with stacked chat bubbles + a loop arrow; steps → three connected icons; late-night messages →
-   crescent moon above a chat window; checklist → card with ticked and empty boxes; mismatched figures → two bar charts + a
-   not-equal sign; slow spreadsheet → huge grid + hourglass; year-end → calendar with one highlighted day + charts;
-   inventory → shelves with boxes + a cyan alert dot; cloud → cloud linked to server stack + database cylinder.
-   Still forbidden by the kit: stock clichés (laptops, handshakes, rockets, light bulbs, robots), fake dashboards that look like
-   real client data, people.
-6. **Third-party logos** (WhatsApp, Excel, ...): allowed by the brand, but composite the official file with the template;
-   never ask the model to draw them (it deforms them).
+5. **Subjects that explain without clichés.** Map each topic to concrete, recognizable objects from the brand's own industry.
+   Pattern (examples only, adapt to the brand): a late report → pages with blank grids + a clock; mismatched figures → two bar
+   charts + a not-equal sign; a process in steps → three connected icons; a checklist → card with ticked and empty boxes; stock
+   → shelves with boxes + an alert dot in the accent colour. Respect the kit's `guardrails.md` and "Don't" list (stock cliché
+   objects, fake dashboards that look like real data, people).
+6. **Third-party logos** (messaging apps, office suites...): only if the brand allows it, and then composite the official file
+   with the template; never ask the model to draw them (it deforms them).
 7. **Review in one look.** Put the candidates side by side (any image tool, or the editor) instead of opening one by one,
    pick, copy the pick to `assets/uploads/` and set the card's `bg` and `"net": 0`.
-8. **Cost reference:** US$0.034 per 1K image; 27 + 8 images for 18 cards ≈ US$1.30 in total.
+8. **Cost:** about US$0.034 per 1K image (see the facts above); `--n 1` for almost every card.
 9. **Carousel inner slides** need a simple icon each: `--n 1` is enough; fix size/position in the editor.
-

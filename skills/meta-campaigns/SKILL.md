@@ -148,7 +148,7 @@ Choose the objective by what the account can actually optimize and measure:
 
 ## Example
 
-User: "Quiero probar anuncios de Meta para mi servicio con ~$3,000 MXN"
+User: "Quiero probar anuncios de Meta para mi servicio con un presupuesto pequeño"
 
 → account check; locate kit and `ads.md` (missing → build with the user)
 → frame: objective = WhatsApp conversations, budget cap, economics (assumptions
